@@ -11,14 +11,13 @@ prog def readreplace
 	}
 	else {
 		local quote `"""'
-		/* " */
 	}
 	* Read in the file
 	tempname myfile
-	file open `myfile' using `"`using'"', read // "
+	file open `myfile' using `"`using'"', read
 	file read `myfile' line
 	if "`display'"!="" {
-		di as txt "Reading line: " as res `"`line'"' // "
+		di as txt "Reading line: " as res `"`line'"'
 	}
 	gettoken idval 0: line, parse(",")
 	gettoken c1 0: 0, parse(",")
@@ -44,13 +43,13 @@ prog def readreplace
 	file read `myfile' line
 	while r(eof)==0 {
 		if "`display'"!="" {
-			di as txt "Reading line: " as res `"`line'"' // "
+			di as txt "Reading line: " as res `"`line'"'
 		}
 		gettoken idval 0: line, parse(",")
 		gettoken c1 0: 0, parse(",")
 		gettoken q 0: 0, parse(",")
 		if `"`q'"' == "," {
-			di as err `"Question missing in line `line' "' // "
+			di as err `"Question missing in line `line' "'
 			exit 198
 		}
 		gettoken c2 0: 0, parse(",")
@@ -71,7 +70,7 @@ prog def readreplace
 		* check that the observation exists
 		qui count if `id' == `quote'`idval'`quote'
 		if `r(N)' == 0 {
-			di _newline as err "Observation " as res `"`idval'"' as err " not found" // "
+			di _newline as err "Observation " as res `"`idval'"' as err " not found"
 			file close `myfile'
 			exit 198
 		}
@@ -84,7 +83,6 @@ prog def readreplace
 		else {
 			local vquote
 			if `"`qval'"' == `""' {
-				// "
 				local qval .
 			}
 		}
@@ -94,7 +92,7 @@ prog def readreplace
 		local changes = `changes' + `r(N)'
 		if `r(N)' > 0 {
 			if "`display'" != "" {
-				di as input `"replace `q'=`vquote'`qval'`vquote' if `id'==`quote'`idval'`quote'"' //"
+				di as input `"replace `q'=`vquote'`qval'`vquote' if `id'==`quote'`idval'`quote'"'
 			}
 			`qui' replace `q'=`vquote'`qval'`vquote' if `id'==`quote'`idval'`quote'
 		}
