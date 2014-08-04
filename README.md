@@ -5,6 +5,11 @@ readreplace
 
 `readreplace` is available through SSC: type `ssc install cfout` in Stata to install.
 
+Certification script
+--------------------
+
+The [certification script](http://www.stata.com/help.cgi?cscript) of `readreplace` is [`cscript/readreplace.do`](/cscript/readreplace.do). If you are new to certification scripts, you may find [this](http://www.stata-journal.com/sjpdf.html?articlenum=pr0001) Stata Journal article helpful. See [this guide](/cscript/Tests.md) for more on `readreplace` testing.
+
 Stata help file
 ---------------
 
