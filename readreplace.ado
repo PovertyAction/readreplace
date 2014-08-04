@@ -1,8 +1,8 @@
 *! v1 by Ryan Knight 12jan2011
+pr readreplace
+	vers 10.1
 
-cap prog drop readreplace
-prog def readreplace
-	syntax using/ , ID(varname) [DIsplay]
+	syntax using/, id(varname) [DIsplay]
 
 	* Check that ID is actually a unique identifier and get its type
 	capture confirm numeric variable `id'
