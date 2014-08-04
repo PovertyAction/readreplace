@@ -12,7 +12,7 @@
 {p 8 17 2}
 {cmdab:readreplace}
 {cmd: using} {it: filename}
-{cmd:, id}({varname}) 
+{cmd:, id}({varname})
 [{cmd:display}]
 
 {synoptset 20 tabbed}{...}
@@ -27,39 +27,39 @@
 {title:Description}
 
 {pstd}
-{cmd:readreplace} makes replacements using a very specifically-formated .csv file. 
+{cmd:readreplace} makes replacements using a very specifically-formated .csv file.
 	It is intended for use with the output from {help cfout}.
-	
+
 {title:Remarks}
 
 {pstd}
 {cmd: readreplace} is intended to be used as part of the data entry process
-	when data is entered two times for accuracy.  
-	After the second entry, the datasets need to be reconciled.  
-	{help cfout} will compare the first and second entries and 
-	generate a list of discrepancies in a format that is useful 
-	for the data entry teams. 
-	The data entry operators can then simply type the correct value 
-	in a new column of the cfout results. 
-	To make the changes in your dataset, 
+	when data is entered two times for accuracy.
+	After the second entry, the datasets need to be reconciled.
+	{help cfout} will compare the first and second entries and
+	generate a list of discrepancies in a format that is useful
+	for the data entry teams.
+	The data entry operators can then simply type the correct value
+	in a new column of the cfout results.
+	To make the changes in your dataset,
 	load your data then run readreplace	using the new .csv file.
-	
+
 {pstd}
 {cmd: readreplace} requires the using file to be a .csv file with the format
-	
+
 {center:{it: id value, question name , correct value } }
 
 {pstd}
 	It then runs the replaces
-	
+
 {center: replace {it:question name} = {it:correct value} if {it:id varname} == {it:id value} }
 
 {pstd}
-	for each line in the csv file, 
+	for each line in the csv file,
 	with allowances for whether the variables/ids are string or numeric.
-	The display option is useful for debugging. 
+	The display option is useful for debugging.
 	The first row is assumed to be a header row, and no replacements are made to data in the first row.
-	
+
 {title:Examples}
 
 {phang}readreplace using "corrected values.csv", id(uniqueid)
