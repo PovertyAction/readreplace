@@ -16,4 +16,19 @@ Contributions of new tests are welcome. When adding a test to the cscript, pleas
 	<td>Basic</td>
 	<td>Help file example for <code>readreplace</code> version 1</td>
 </tr>
+<tr>
+	<td>2</td>
+	<td>User mistakes</td>
+	<td>Specify <code>.csv</code> files that result in an <code>insheet</code> error.</td>
+</tr>
+<tr>
+	<td>3</td>
+	<td>User mistakes</td>
+	<td>Specify a <code>.csv</code> file whose first column is not the ID variable.</td>
+</tr>
+<tr>
+	<td>4</td>
+	<td>User mistakes</td>
+	<td>Specify <code>.csv</code> files that do not contain exactly three columns.</td>
+</tr>
 </table>

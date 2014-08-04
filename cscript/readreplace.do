@@ -69,7 +69,25 @@ cd ..
 /* -------------------------------------------------------------------------- */
 					/* user mistakes		*/
 
-// ...
+* Test 2
+cd 2
+u firstEntry, clear
+rcof "noi readreplace using correct.csv, id(uniqueid)" == 601
+rcof "noi readreplace using correctedValues.csv, id(uniqueid)" == 198
+cd ..
+
+* Test 3
+cd 3
+u firstEntry, clear
+rcof "noi readreplace using correctedValues.csv, id(uniqueid)" == 198
+cd ..
+
+* Test 4
+cd 4
+u firstEntry, clear
+rcof "noi readreplace using too_few.csv,  id(uniqueid)" == 198
+rcof "noi readreplace using too_many.csv, id(uniqueid)" == 198
+cd ..
 
 
 /* -------------------------------------------------------------------------- */
