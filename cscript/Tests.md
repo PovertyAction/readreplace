@@ -31,4 +31,9 @@ Contributions of new tests are welcome. When adding a test to the cscript, pleas
 	<td>User mistakes</td>
 	<td>Specify <code>.csv</code> files that do not contain exactly three columns.</td>
 </tr>
+<tr>
+	<td>5</td>
+	<td>Basic</td>
+	<td>Specify deprecated option <code>display</code>; it should have no effect.</td>
+</tr>
 </table>

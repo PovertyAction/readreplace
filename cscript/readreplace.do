@@ -94,6 +94,18 @@ mata: assert(sum(st_matrix("changes")) == `r(N)')
 compdta `expected_dta'
 cd ..
 
+* Test 5
+cd 5
+u firstEntry, clear
+preserve
+readreplace using correctedValues.csv, id(uniqueid)
+tempfile temp
+sa `temp'
+restore
+readreplace using correctedValues.csv, id(uniqueid) display
+compdta `temp'
+cd ..
+
 
 /* -------------------------------------------------------------------------- */
 					/* user mistakes		*/

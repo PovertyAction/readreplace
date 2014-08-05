@@ -27,6 +27,11 @@ pr readreplace, rclass
 		ex 198
 	}
 
+	if "`display'" != "" {
+		di as txt "note: option {opt display} is deprecated " ///
+			"and will be ignored."
+	}
+
 	keep `id' `variable' `value'
 	qui tostring `value', replace format(%24.0g)
 	conf str var `value'
@@ -44,15 +49,9 @@ pr readreplace, rclass
 
 	/*
 	* Loop through lines in the file, making replacements as necessary
-	if "`display'" == "" {
-		local qui qui
-	}
 	local changes = 0
 	file read `myfile' line
 	while r(eof)==0 {
-		if "`display'"!="" {
-			di as txt "Reading line: " as res `"`line'"'
-		}
 		gettoken idval 0: line, parse(",")
 		gettoken c1 0: 0, parse(",")
 		gettoken q 0: 0, parse(",")
@@ -99,10 +98,7 @@ pr readreplace, rclass
 		qui count if `q'!=`vquote'`qval'`vquote' & `id'==`quote'`idval'`quote'
 		local changes = `changes' + `r(N)'
 		if `r(N)' > 0 {
-			if "`display'" != "" {
-				di as input `"replace `q'=`vquote'`qval'`vquote' if `id'==`quote'`idval'`quote'"'
-			}
-			`qui' replace `q'=`vquote'`qval'`vquote' if `id'==`quote'`idval'`quote'
+			replace `q'=`vquote'`qval'`vquote' if `id'==`quote'`idval'`quote'
 		}
 		file read `myfile' line
 	}
