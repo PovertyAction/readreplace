@@ -41,4 +41,9 @@ Contributions of new tests are welcome. When adding a test to the cscript, pleas
 	<td>User mistakes</td>
 	<td>The variable name variable contains a value that is not an unabbreviated variable name.</td>
 </tr>
+<tr>
+	<td>7</td>
+	<td>User mistakes</td>
+	<td>Specify a replacements file with ID values not in the dataset in memory.</td>
+</tr>
 </table>

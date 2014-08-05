@@ -9,6 +9,12 @@ pr readreplace, rclass
 
 	preserve
 
+	keep `id'
+	if _N ///
+		qui duplicates drop
+	tempfile idvals
+	qui sa `idvals'
+
 	* Import the replacements file.
 	loc cmd insheet `using', clear
 	cap `cmd'
@@ -29,6 +35,28 @@ pr readreplace, rclass
 		di as txt "The using file must have the format: " as res "`id',varname,correct_value"
 		ex 198
 	}
+
+	* ID values in the replacements file but not the dataset in memory
+	tempvar order merge
+	gen `order' = _n
+	qui merge `id' using `idvals', sort uniqus _merge(`merge')
+	qui drop if `merge' == 2
+	qui cou if `merge' == 1
+	if r(N) {
+		loc values = plural(r(N), "value")
+		loc variables = plural(`:list sizeof id', "variable")
+		di as err "{p}"
+		di as err "option id(): `values' of `variables' `id' in"
+		di as err "replacements file not found in dataset in memory"
+		di as err "{p_end}"
+		loc max 1
+		foreach var of loc id {
+			loc max = max(`max', strlen("`var'"))
+		}
+		li `id' if `merge' == 1, ab(`max') noo
+		ex 198
+	}
+	sort `order'
 
 	* "r" suffix for "replacements file"
 	qui levelsof `variable', loc(vars_r) miss
@@ -76,14 +104,6 @@ pr readreplace, rclass
 	while r(eof)==0 {
 		* Delete double quotes that result if you use commas within quotes in a csv file
 		local qval: subinstr local qval `""""' `"""', all
-
-		* check that the observation exists
-		qui count if `id' == `quote'`idval'`quote'
-		if `r(N)' == 0 {
-			di _newline as err "Observation " as res `"`idval'"' as err " not found"
-			file close `myfile'
-			exit 198
-		}
 
 		* Check var type
 		capture confirm numeric variable `q'

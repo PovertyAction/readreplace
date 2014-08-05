@@ -161,6 +161,24 @@ foreach q in
 }
 cd ..
 
+* Test 7
+cd 7
+u firstEntry, clear
+readreplace using correctedValues.csv, id(uniqueid)
+assert uniqueid <= 1000
+insheet using correctedValues.csv, c n case clear
+assert uniqueid <= 1000
+forv i = 1/2 {
+	replace uniqueid = 1000 + `i' in `i'
+	tempfile bad`i'
+	outsheet using `bad`i'', c
+}
+u firstEntry, clear
+forv i = 1/2 {
+	rcof "noi readreplace using `bad`i'', id(uniqueid)" == 198
+}
+cd ..
+
 
 /* -------------------------------------------------------------------------- */
 					/* finish up			*/
