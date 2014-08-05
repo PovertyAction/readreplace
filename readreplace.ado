@@ -1,5 +1,5 @@
 *! v1 by Ryan Knight 12jan2011
-pr readreplace
+pr readreplace, rclass
 	vers 10.1
 
 	syntax using, id(varname) [DIsplay]
@@ -32,8 +32,13 @@ pr readreplace
 	conf str var `value'
 	sort `variable', stable
 	mata: readreplace("id", "variable", "value", "varlist", "N", "changes")
+	* Return stored results.
+	ret sca N = `N'
+	ret loc varlist `varlist'
+	if `return(N)' ///
+		ret mat changes = `changes'
 
-	di as txt _n "Total changes made: " as res `N'
+	di as txt _n "Total changes made: " as res `return(N)'
 
 	restore, not
 

@@ -61,8 +61,37 @@ cd tests
 
 * Test 1
 cd 1
+insheet using correctedValues.csv, c n case clear
+conf numeric var uniqueid CorrectValue
+tostring uniqueid CorrectValue, replace
+conf str var uniqueid CorrectValue
+gen cmd = "replace " + Question + " = " + CorrectValue + ///
+	" if uniqueid == " + uniqueid
+tempfile do
+outsheet cmd using `do', non noq
 u firstEntry, clear
+preserve
+do `do'
+tempfile expected_dta
+sa `expected_dta'
+restore
 readreplace using correctedValues.csv, id(uniqueid)
+assert r(N) == 12
+loc varlist `r(varlist)'
+loc expected age am_failure district do_well feel_useless gender income ///
+	little_pride no_good_at_all person_of_worth positive_attitude ///
+	satisfied_w_self want_selfrespect
+assert `:list varlist == expected'
+mat changes = r(changes)
+assert "`:rownames changes'" == "changes"
+assert "`:rowfullnames changes'" == "changes"
+loc colnames : colnames changes
+assert `:list colnames == varlist'
+loc colnames : colfullnames changes
+assert `:list colnames == varlist'
+mata: assert(st_matrix("changes") == (2, 3, 1, 1, 0, 1, 2, 0, 1, 0, 0, 0, 1))
+mata: assert(sum(st_matrix("changes")) == `r(N)')
+compdta `expected_dta'
 cd ..
 
 
