@@ -7,6 +7,12 @@ pr readreplace, rclass
 	* "m" suffix for "master"
 	unab vars_m : _all
 
+	qui ds, has(t numeric)
+	loc numvars `r(varlist)'
+	foreach var of loc id {
+		loc idtypes `idtypes' `:type `var''
+	}
+
 	preserve
 
 	keep `id'
@@ -36,28 +42,6 @@ pr readreplace, rclass
 		ex 198
 	}
 
-	* ID values in the replacements file but not the dataset in memory
-	tempvar order merge
-	gen `order' = _n
-	qui merge `id' using `idvals', sort uniqus _merge(`merge')
-	qui drop if `merge' == 2
-	qui cou if `merge' == 1
-	if r(N) {
-		loc values = plural(r(N), "value")
-		loc variables = plural(`:list sizeof id', "variable")
-		di as err "{p}"
-		di as err "option id(): `values' of `variables' `id' in"
-		di as err "replacements file not found in dataset in memory"
-		di as err "{p_end}"
-		loc max 1
-		foreach var of loc id {
-			loc max = max(`max', strlen("`var'"))
-		}
-		li `id' if `merge' == 1, ab(`max') noo
-		ex 198
-	}
-	sort `order'
-
 	* "r" suffix for "replacements file"
 	qui levelsof `variable', loc(vars_r) miss
 	loc rnotm : list vars_r - vars_m
@@ -70,11 +54,95 @@ pr readreplace, rclass
 			loc first : list clean first
 		}
 		di as err "{p}"
-		di as err "option variable(): " _c
-		di as err `"a value of variable `variable', `first', is"'
-		di as err "not a variable in memory"
+		di as err "option variable(): a value of variable `variable',"
+		di as err `"`first', is not a variable in memory"'
 		di as err "{p_end}"
 		ex 111
+	}
+
+	if _N {
+		* Check storage types. If _N == 0, some types may not be correct:
+		* for instance, if the file is -insheet-ed, all types will be byte.
+		* However, as no replacements will be made, this is not a problem.
+
+		* -id()-
+		foreach var of loc id {
+			cap conf numeric var `var'
+			if !_rc != `:list var in numvars' {
+				loc typem : word `:list posof "`var'" in id' of `idtypes'
+				loc typeu : type `var'
+				di as err "{p}"
+				di as err "option id(): variable `var' is"
+				di as err "`typem' in dataset in memory but"
+				di as err "`typeu' in replacements file"
+				di as err "{p_end}"
+				ex 106
+			}
+		}
+
+		* It is not necessary to check the storage type of
+		* the variable name variable: the check above of
+		* the variable's values is sufficient.
+
+		* `value'
+		* "replvars" for "replacement variables"
+		qui levelsof `variable', loc(replvars)
+		cap conf str var `value'
+		if _rc {
+			loc tostring tostring `value', replace format(%24.0g)
+			loc replvars_str : list replvars - numvars
+			if `:list sizeof replvars_str' {
+				di as txt "{p}"
+				di "note: variable {res:`value'} of the replacements file is"
+				di "numeric, but variable {res:`variable'} contains"
+				di "string variables. {res:`value'} will be converted to"
+				di "string:"
+				di "{p_end}"
+				di _n "{cmd:`tostring'}" _n
+			}
+			qui `tostring'
+			conf str var `value'
+		}
+		else {
+			* Check the new values for numeric variables.
+			tempvar trimval
+			qui gen `trimval' = strtrim(`value')
+			loc replvars_num : list replvars & numvars
+			foreach var of loc replvars_num {
+				qui cou if `variable' == "`var'" & (`trimval' == "." | ///
+					strlen(`trimval') == 2 & inrange(`trimval', ".a", ".z"))
+				loc miss_str = r(N)
+				qui cou if `variable' == "`var'" & mi(real(`trimval'))
+				loc miss_num = r(N)
+				if `miss_str' != `miss_num' {
+					di as err "new value variable: cannot replace " ///
+						"numeric variable `var' with string value"
+					ex 109
+				}
+			}
+		}
+
+		* ID values in the replacements file but not the dataset in memory
+		tempvar order merge
+		gen `order' = _n
+		qui merge `id' using `idvals', sort uniqus _merge(`merge')
+		qui drop if `merge' == 2
+		qui cou if `merge' == 1
+		if r(N) {
+			loc values = plural(r(N), "value")
+			loc variables = plural(`:list sizeof id', "variable")
+			di as err "{p}"
+			di as err "option id(): `values' of `variables' `id' in"
+			di as err "replacements file not found in dataset in memory"
+			di as err "{p_end}"
+			loc max 1
+			foreach var of loc id {
+				loc max = max(`max', strlen("`var'"))
+			}
+			li `id' if `merge' == 1, ab(`max') noo
+			ex 198
+		}
+		sort `order'
 	}
 
 	if "`display'" != "" {
@@ -83,8 +151,6 @@ pr readreplace, rclass
 	}
 
 	keep `id' `variable' `value'
-	qui tostring `value', replace format(%24.0g)
-	conf str var `value'
 	sort `variable', stable
 	mata: readreplace("id", "variable", "value", "varlist", "N", "changes")
 	* Return stored results.
@@ -104,18 +170,6 @@ pr readreplace, rclass
 	while r(eof)==0 {
 		* Delete double quotes that result if you use commas within quotes in a csv file
 		local qval: subinstr local qval `""""' `"""', all
-
-		* Check var type
-		capture confirm numeric variable `q'
-		if _rc {
-			local vquote `"""'
-		}
-		else {
-			local vquote
-			if `"`qval'"' == `""' {
-				local qval .
-			}
-		}
 
 		* Make replacement
 		qui count if `q'!=`vquote'`qval'`vquote' & `id'==`quote'`idval'`quote'

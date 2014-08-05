@@ -106,6 +106,113 @@ readreplace using correctedValues.csv, id(uniqueid) display
 compdta `temp'
 cd ..
 
+* Test 8
+cd 8
+u firstEntry, clear
+readreplace using correctedValues.csv, id(uniqueid)
+assert r(N) == 12
+assert "`r(varlist)'" != ""
+insheet using correctedValues.csv, c n case clear
+drop in 1/L
+tempfile t
+outsheet using `t', c
+u firstEntry, clear
+readreplace using `t', id(uniqueid)
+assert !r(N)
+assert "`r(varlist)'" == ""
+compdta firstEntry
+cd ..
+
+* Test 9
+cd 9
+u firstEntry, clear
+readreplace using correctedValues.csv, id(uniqueid)
+assert r(N) == 12
+assert "`r(varlist)'" != ""
+u firstEntry, clear
+tostring uniqueid, replace
+conf str var uniqueid
+tempfile idstr
+sa `idstr'
+rcof "noi readreplace using correctedValues.csv, id(uniqueid)" == 106
+insheet using correctedValues.csv, c n case clear
+drop in 1/L
+tempfile t
+outsheet using `t', c
+insheet using `t', clear
+conf numeric var uniqueid
+u `idstr', clear
+readreplace using `t', id(uniqueid)
+assert !r(N)
+assert "`r(varlist)'" == ""
+cd ..
+
+* Test 10
+cd 10
+u firstEntry, clear
+readreplace using correct_num.csv, id(uniqueid)
+assert r(N) == 12
+u firstEntry, clear
+cou if uniqueid == 105
+assert r(N)
+assert firstname == "Marcos" if uniqueid == 105
+readreplace using correct_str.csv, id(uniqueid)
+assert r(N) == 2
+assert firstname == "Lindsey" if uniqueid == 105
+insheet using correct_str.csv, c n case clear
+tempfile str
+sa `str'
+insheet using correct_num.csv, c n case clear
+tostring CorrectValue, replace
+assert c(k) == 3
+append using `str'
+assert c(k) == 3
+tempfile all
+outsheet using `all', c
+u firstEntry, clear
+readreplace using `all', id(uniqueid)
+assert r(N) == 14
+cd ..
+
+* Test 12
+cd 12
+u firstEntry, clear
+isid uniqueid
+cou if inlist(uniqueid, 105, 999)
+assert r(N) == 2
+assert firstname == "Marcos" if uniqueid == 105
+assert firstname == "London" if uniqueid == 999
+readreplace using correctedValues.csv, id(uniqueid)
+assert r(N) == 14
+assert firstname == "." if uniqueid == 105
+assert firstname == "2" if uniqueid == 999
+tempname fh
+file open `fh' using correctedValues.csv, r
+file r `fh' line
+file r `fh' line
+assert `"`line'"' == "105,firstname,"
+file close `fh'
+cd ..
+
+* Test 13
+cd 13
+insheet using correctedValues.csv, c n case clear
+cou if Question == "gender" & CorrectValue != strtrim(CorrectValue)
+assert r(N)
+assert strtrim(CorrectValue) == strofreal(real(CorrectValue)) ///
+	if Question == "gender"
+u firstEntry, clear
+isid uniqueid
+cou if inlist(uniqueid, 1, 2, 3, 4, 5, 6)
+assert r(N) == 6
+assert inlist(gender, 1, 2) if inlist(uniqueid, 1, 2, 3, 4, 5, 6)
+readreplace using correctedValues.csv, id(uniqueid)
+assert r(N) == 7
+assert gender == 0  if inlist(uniqueid, 1, 4)
+assert gender == .  if inlist(uniqueid, 2, 5)
+assert gender == .a if inlist(uniqueid, 3, 6)
+cd ..
+
 
 /* -------------------------------------------------------------------------- */
 					/* user mistakes		*/
@@ -177,6 +284,19 @@ u firstEntry, clear
 forv i = 1/2 {
 	rcof "noi readreplace using `bad`i'', id(uniqueid)" == 198
 }
+cd ..
+
+* Test 11
+cd 11
+u firstEntry, clear
+rcof "noi readreplace using correct_str.csv, id(uniqueid)" == 111
+cd ..
+
+* Test 14
+cd 14
+u firstEntry, clear
+rcof "noi readreplace using correct_string.csv, id(uniqueid)" == 109
+rcof "noi readreplace using correct_blank.csv,  id(uniqueid)" == 109
 cd ..
 
 

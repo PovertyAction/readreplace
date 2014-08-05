@@ -46,4 +46,39 @@ Contributions of new tests are welcome. When adding a test to the cscript, pleas
 	<td>User mistakes</td>
 	<td>Specify a replacements file with ID values not in the dataset in memory.</td>
 </tr>
+<tr>
+	<td>8</td>
+	<td>Basic</td>
+	<td>Specify a replacements file with no observations.</td>
+</tr>
+<tr>
+	<td>9</td>
+	<td>Basic</td>
+	<td>Specify a string ID variable and a replacements file to <code>insheet</code> that has no observations.</td>
+</tr>
+<tr>
+	<td>10</td>
+	<td>Basic</td>
+	<td>Specify a replacements file whose variable name variable includes both numeric and string variables.</td>
+</tr>
+<tr>
+	<td>11</td>
+	<td>User mistakes</td>
+	<td>Specify a replacements file whose variable name variable is numeric.</td>
+</tr>
+<tr>
+	<td>12</td>
+	<td>Basic</td>
+	<td>Specify a replacements file whose variable name variable includes a string variable but whose new value variable is numeric.</td>
+</tr>
+<tr>
+	<td>13</td>
+	<td>Basic</td>
+	<td>Specify a replacements file whose variable name variable includes a numeric variable but whose new value variable is string. Further, while all the values for numeric variables are numeric when converted by Mata's <code>strtoreal()</code>, some contain leading and trailing spaces.</td>
+</tr>
+<tr>
+	<td>14</td>
+	<td>User mistakes</td>
+	<td>Specify a replacements file whose variable name variable includes a numeric variable but whose new value variable specifies a string value for that variable. Blank values (<code>""</code>) are interpreted as string, and are not converted to <code>sysmiss</code>.</td>
+</tr>
 </table>
