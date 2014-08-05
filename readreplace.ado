@@ -4,6 +4,9 @@ pr readreplace, rclass
 
 	syntax using, id(varname) [DIsplay]
 
+	* "m" suffix for "master"
+	unab vars_m : _all
+
 	preserve
 
 	* Import the replacements file.
@@ -25,6 +28,25 @@ pr readreplace, rclass
 		di _newline as err "Error: Using file has improper format"
 		di as txt "The using file must have the format: " as res "`id',varname,correct_value"
 		ex 198
+	}
+
+	* "r" suffix for "replacements file"
+	qui levelsof `variable', loc(vars_r) miss
+	loc rnotm : list vars_r - vars_m
+	if `:list sizeof rnotm' {
+		gettoken first : rnotm
+		if !`:length loc first' ///
+			loc first """"
+		else {
+			loc first "`"`first'"'"
+			loc first : list clean first
+		}
+		di as err "{p}"
+		di as err "option variable(): " _c
+		di as err `"a value of variable `variable', `first', is"'
+		di as err "not a variable in memory"
+		di as err "{p_end}"
+		ex 111
 	}
 
 	if "`display'" != "" {
@@ -52,27 +74,8 @@ pr readreplace, rclass
 	local changes = 0
 	file read `myfile' line
 	while r(eof)==0 {
-		gettoken idval 0: line, parse(",")
-		gettoken c1 0: 0, parse(",")
-		gettoken q 0: 0, parse(",")
-		if `"`q'"' == "," {
-			di as err `"Question missing in line `line' "'
-			exit 198
-		}
-		gettoken c2 0: 0, parse(",")
-		local qval `0'
-
 		* Delete double quotes that result if you use commas within quotes in a csv file
 		local qval: subinstr local qval `""""' `"""', all
-
-		* check that q is a variable
-		capture confirm variable `q'
-		if _rc {
-			di _newline as err "Error!" _newline as res "`q'" as txt " is not a variable name"
-			di as txt "The using file must have the format: " as res "`id',varname,correct_value"
-			file close `myfile'
-			exit 198
-		}
 
 		* check that the observation exists
 		qui count if `id' == `quote'`idval'`quote'

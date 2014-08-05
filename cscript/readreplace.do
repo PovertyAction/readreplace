@@ -130,6 +130,37 @@ rcof "noi readreplace using too_few.csv,  id(uniqueid)" == 198
 rcof "noi readreplace using too_many.csv, id(uniqueid)" == 198
 cd ..
 
+* Test 6
+cd 6
+insheet using correctedValues.csv, c n case clear
+assert Question == "district" in 1
+u firstEntry, clear
+readreplace using correctedValues.csv, id(uniqueid)
+#d ;
+foreach q in
+	distric
+	distric?
+	distric*
+	d~strict
+	district-district
+	DoesNotExist
+	""
+	"embedded space"
+{;
+	#d cr
+	qui insheet using correctedValues.csv, c n case clear
+	qui replace Question = `"`q'"' in 1
+	tempfile t
+	outsheet using `t', c
+
+	u firstEntry, clear
+	foreach varabbrev in "" varabbrev {
+		rcof "noi `varabbrev' readreplace using `t', id(uniqueid)" == 111
+		compdta firstEntry
+	}
+}
+cd ..
+
 
 /* -------------------------------------------------------------------------- */
 					/* finish up			*/

@@ -36,4 +36,9 @@ Contributions of new tests are welcome. When adding a test to the cscript, pleas
 	<td>Basic</td>
 	<td>Specify deprecated option <code>display</code>; it should have no effect.</td>
 </tr>
+<tr>
+	<td>6</td>
+	<td>User mistakes</td>
+	<td>The variable name variable contains a value that is not an unabbreviated variable name.</td>
+</tr>
 </table>
