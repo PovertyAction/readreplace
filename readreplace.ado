@@ -162,24 +162,6 @@ pr readreplace, rclass
 	di as txt _n "Total changes made: " as res `return(N)'
 
 	restore, not
-
-	/*
-	* Loop through lines in the file, making replacements as necessary
-	local changes = 0
-	file read `myfile' line
-	while r(eof)==0 {
-		* Delete double quotes that result if you use commas within quotes in a csv file
-		local qval: subinstr local qval `""""' `"""', all
-
-		* Make replacement
-		qui count if `q'!=`vquote'`qval'`vquote' & `id'==`quote'`idval'`quote'
-		local changes = `changes' + `r(N)'
-		if `r(N)' > 0 {
-			replace `q'=`vquote'`qval'`vquote' if `id'==`quote'`idval'`quote'
-		}
-		file read `myfile' line
-	}
-	*/
 end
 
 
