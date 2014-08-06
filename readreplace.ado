@@ -21,26 +21,9 @@ pr readreplace, rclass
 	tempfile idvals
 	qui sa `idvals'
 
-	* Import the replacements file.
-	loc cmd insheet `using', clear
-	cap `cmd'
-	if _rc {
-		loc rc = _rc
-		* Display the error message.
-		cap noi `cmd'
-		ex `rc'
-	}
-
-	unab rest : _all
-	gettoken first		rest : rest
-	gettoken variable	rest : rest
-	gettoken value : rest
-
-	if "`first'" != "`id'" | c(k) != 3 {
-		di _newline as err "Error: Using file has improper format"
-		di as txt "The using file must have the format: " as res "`id',varname,correct_value"
-		ex 198
-	}
+	import_replacements `using', id(`id')
+	loc variable	`r(variable)'
+	loc value		`r(value)'
 
 	* "r" suffix for "replacements file"
 	qui levelsof `variable', loc(vars_r) miss
@@ -163,6 +146,41 @@ pr readreplace, rclass
 
 	restore, not
 end
+
+
+/* -------------------------------------------------------------------------- */
+					/* import				*/
+
+pr import_replacements, rclass
+	syntax using, id(name)
+
+	* Import the replacements file.
+	loc cmd insheet `using', clear
+	cap `cmd'
+	if _rc {
+		loc rc = _rc
+		* Display the error message.
+		cap noi `cmd'
+		ex `rc'
+	}
+
+	unab rest : _all
+	gettoken first		rest : rest
+	gettoken variable	rest : rest
+	gettoken value : rest
+
+	if "`first'" != "`id'" | c(k) != 3 {
+		di _newline as err "Error: Using file has improper format"
+		di as txt "The using file must have the format: " as res "`id',varname,correct_value"
+		ex 198
+	}
+
+	ret loc variable	`variable'
+	ret loc value		`value'
+end
+
+					/* import				*/
+/* -------------------------------------------------------------------------- */
 
 
 /* -------------------------------------------------------------------------- */
