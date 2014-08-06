@@ -70,28 +70,35 @@ gen cmd = "replace " + Question + " = " + CorrectValue + ///
 tempfile do
 outsheet cmd using `do', non noq
 u firstEntry, clear
-preserve
 do `do'
 tempfile expected_dta
 sa `expected_dta'
-restore
-readreplace using correctedValues.csv, id(uniqueid)
-assert r(N) == 12
-loc varlist `r(varlist)'
-loc expected age am_failure district do_well feel_useless gender income ///
-	little_pride no_good_at_all person_of_worth positive_attitude ///
-	satisfied_w_self want_selfrespect
-assert `:list varlist == expected'
-mat changes = r(changes)
-assert "`:rownames changes'" == "changes"
-assert "`:rowfullnames changes'" == "changes"
-loc colnames : colnames changes
-assert `:list colnames == varlist'
-loc colnames : colfullnames changes
-assert `:list colnames == varlist'
-mata: assert(st_matrix("changes") == (2, 3, 1, 1, 0, 1, 2, 0, 1, 0, 0, 0, 1))
-mata: assert(sum(st_matrix("changes")) == `r(N)')
-compdta `expected_dta'
+#d ;
+foreach cmd in
+	"readreplace using correctedValues.csv, id(uniqueid)"
+	"readreplace using correctedValues.csv, id(uniqueid) variable(Question) value(CorrectValue)"
+{;
+	#d cr
+	u firstEntry, clear
+	`cmd'
+	assert r(N) == 12
+	loc varlist `r(varlist)'
+	loc expected age am_failure district do_well feel_useless gender income ///
+		little_pride no_good_at_all person_of_worth positive_attitude ///
+		satisfied_w_self want_selfrespect
+	assert `:list varlist == expected'
+	mat changes = r(changes)
+	assert "`:rownames changes'" == "changes"
+	assert "`:rowfullnames changes'" == "changes"
+	loc colnames : colnames changes
+	assert `:list colnames == varlist'
+	loc colnames : colfullnames changes
+	assert `:list colnames == varlist'
+	mata: assert(st_matrix("changes") == ///
+		(2, 3, 1, 1, 0, 1, 2, 0, 1, 0, 0, 0, 1))
+	mata: assert(sum(st_matrix("changes")) == `r(N)')
+	compdta `expected_dta'
+}
 cd ..
 
 * Test 5
@@ -139,7 +146,7 @@ insheet using correctedValues.csv, c n case clear
 drop in 1/L
 tempfile t
 outsheet using `t', c
-insheet using `t', clear
+insheet using `t', c n case clear
 conf numeric var uniqueid
 u `idstr', clear
 readreplace using `t', id(uniqueid)
@@ -227,14 +234,22 @@ cd ..
 * Test 3
 cd 3
 u firstEntry, clear
-rcof "noi readreplace using correctedValues.csv, id(uniqueid)" == 198
+loc readreplace readreplace using correctedValues.csv, id(uniqueid)
+rcof "noi `readreplace'" == 198
+* Works under 2.0.0 syntax
+`readreplace' var(Question) val(CorrectValue)
+assert r(N) == 12
 cd ..
 
 * Test 4
 cd 4
 u firstEntry, clear
 rcof "noi readreplace using too_few.csv,  id(uniqueid)" == 198
-rcof "noi readreplace using too_many.csv, id(uniqueid)" == 198
+loc readreplace readreplace using too_many.csv, id(uniqueid)
+rcof "noi `readreplace'" == 198
+* Works under 2.0.0 syntax
+`readreplace' var(Question) val(CorrectValue)
+assert r(N) == 12
 cd ..
 
 * Test 6
@@ -242,7 +257,8 @@ cd 6
 insheet using correctedValues.csv, c n case clear
 assert Question == "district" in 1
 u firstEntry, clear
-readreplace using correctedValues.csv, id(uniqueid)
+readreplace using correctedValues.csv, ///
+	id(uniqueid) var(Question) val(CorrectValue)
 #d ;
 foreach q in
 	distric
@@ -262,7 +278,11 @@ foreach q in
 
 	u firstEntry, clear
 	foreach varabbrev in "" varabbrev {
-		rcof "noi `varabbrev' readreplace using `t', id(uniqueid)" == 111
+		#d ;
+		rcof "noi `varabbrev' readreplace using `t',
+			id(uniqueid) var(Question) val(CorrectValue)"
+			== 111;
+		#d cr
 		compdta firstEntry
 	}
 }
@@ -297,6 +317,65 @@ cd 14
 u firstEntry, clear
 rcof "noi readreplace using correct_string.csv, id(uniqueid)" == 109
 rcof "noi readreplace using correct_blank.csv,  id(uniqueid)" == 109
+cd ..
+
+* Test 15
+cd 15
+u firstEntry, clear
+loc rr readreplace using correctedValues.csv, id(uniqueid)
+`rr'
+assert r(N) == 12
+`rr' var(Question) val(CorrectValue)
+assert !r(N)
+rcof "noi `rr' var(Question)" == 198
+rcof "noi `rr' val(CorrectValue)" == 198
+cd ..
+
+* Test 16
+cd 16
+u firstEntry, clear
+loc opts id(uniqueid) var(Question) val(CorrectValue)
+rcof "noi readreplace using no_id.csv,  `opts'" == 111
+rcof "noi readreplace using no_var.csv, `opts'" == 111
+rcof "noi readreplace using no_val.csv, `opts'" == 111
+cd ..
+
+* Test 17
+cd 17
+insheet using correct.csv, c n case clear
+assert _N == 1
+assert Question == CorrectValue
+u firstEntry, clear
+readreplace using correct.csv, id(uniqueid) var(Question) val(CorrectValue)
+assert r(N) == 1
+u firstEntry, clear
+#d ;
+rcof "noi readreplace using correct.csv,
+	id(uniqueid) var(Question) val(Question)"
+	== 198;
+#d cr
+cd ..
+
+* Test 18
+cd 18
+u firstEntry, clear
+tostring uniqueid, replace
+conf str var uniqueid
+replace uniqueid = "firstname" if uniqueid == "1"
+cou if uniqueid == "firstname"
+assert r(N)
+preserve
+readreplace using correct.csv, id(uniqueid) var(Question) val(CorrectValue)
+assert r(N) == 1
+restore
+#d ;
+rcof "noi readreplace using correct.csv,
+	id(uniqueid) var(uniqueid) val(CorrectValue)"
+	== 198;
+rcof "noi readreplace using correct.csv,
+	id(uniqueid) var(Question) val(uniqueid)"
+	== 198;
+#d cr
 cd ..
 
 
