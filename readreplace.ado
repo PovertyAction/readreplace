@@ -152,7 +152,8 @@ end
 					/* import				*/
 
 pr import_replacements, rclass
-	syntax using, id(varname) [VARiable(str) VALue(str)]
+	syntax using, id(varname) [VARiable(str) VALue(str) ///
+		Use insheet EXCel import(str asis)]
 
 	* Version 1 syntax
 	if "`variable'`value'" == "" {
@@ -160,6 +161,9 @@ pr import_replacements, rclass
 			"see {helpb readreplace} for new syntax."
 
 		syntax using, id(varname)
+
+		loc insheet insheet
+		loc import comma names case
 	}
 	* Version 2.0.0
 	else {
@@ -174,15 +178,28 @@ pr import_replacements, rclass
 			syntax, variable(varname)
 			/*NOTREACHED*/
 		}
+
+		if "`use'`insheet'`excel'" == "" ///
+			loc insheet insheet
+
+		* Check -use-, -insheet-, and -excel-.
+		if ("`use'" != "") + ("`insheet'" != "") + ("`excel'" != "") != 1 {
+			di as err "options use, insheet, and excel are mutually exclusive"
+			ex 198
+		}
 	}
 
 	* Import the replacements file.
-	loc cmd insheet `using', c n case clear
+	loc importexcel = cond("`excel'" != "", "import excel", "")
+	loc clear clear
+	loc import : list import - clear
+	loc cmd `use'`insheet'`importexcel' `using', clear `import'
 	cap `cmd'
 	if _rc {
 		loc rc = _rc
 		* Display the error message.
 		cap noi `cmd'
+		di as err "(error in option {bf:`use'`insheet'`excel'})"
 		ex `rc'
 	}
 

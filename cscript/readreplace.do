@@ -76,7 +76,7 @@ sa `expected_dta'
 #d ;
 foreach cmd in
 	"readreplace using correctedValues.csv, id(uniqueid)"
-	"readreplace using correctedValues.csv, id(uniqueid) variable(Question) value(CorrectValue)"
+	"readreplace using correctedValues.csv, id(uniqueid) variable(question) value(correctvalue)"
 {;
 	#d cr
 	u firstEntry, clear
@@ -220,6 +220,180 @@ assert gender == .  if inlist(uniqueid, 2, 5)
 assert gender == .a if inlist(uniqueid, 3, 6)
 cd ..
 
+* Test 19
+cd 19
+u firstEntry, clear
+readreplace using correctedValues.csv, ///
+	id(uniqueid) var(question) val(correctvalue)
+assert r(N) == 12
+tempfile expected
+sa `expected'
+insheet using correctedValues.csv, c n case clear
+tempfile dta
+sa `dta'
+#d ;
+loc good
+	insheet		correctedValues.csv		""
+										uniqueid	question	correctvalue
+	insheet		correctedValues.csv		clear
+										uniqueid	question	correctvalue
+	insheet		correctedValues.csv		comma
+										uniqueid	question	correctvalue
+	insheet		correctedValues.csv		names
+										uniqueid	question	correctvalue
+	insheet		correctedValues.csv		case
+										uniqueid	Question	CorrectValue
+	insheet		correctedValues.csv		"case clear"
+										uniqueid	Question	CorrectValue
+	insheet		correctedValues.csv		"comma names case"
+										uniqueid	Question	CorrectValue
+	""			correctedValues.csv		""
+										uniqueid	""			""
+	use			`dta'					""
+										uniqueid	Question	CorrectValue
+	use			`dta'					clear
+										uniqueid	Question	CorrectValue
+	use			`dta'					nolabel
+										uniqueid	Question	CorrectValue
+	use			`dta'					"nolabel clear"
+										uniqueid	Question	CorrectValue
+;
+loc bad
+	insheet		correctedValues.csv		"clear clear"
+										uniqueid	question	correctvalue
+										198
+	insheet		correctedValues.csv		not_an_option
+										uniqueid	question	correctvalue
+										198
+	insheet		correctedValues.csv		nonames
+										uniqueid	question	correctvalue
+										111
+	insheet		correctedValues.csv		tab
+										uniqueid	question	correctvalue
+										111
+	insheet		correctedValues.csv		`"delimiter("\`=char(59)'")"'
+										uniqueid	question	correctvalue
+										111
+	insheet		`dta'					case
+										uniqueid	Question	CorrectValue
+										111
+	use			`dta'					""
+										uniqueid	""			""
+										198
+	use			`dta'					"clear clear"
+										uniqueid	Question	CorrectValue
+										198
+	use			`dta'					not_an_option
+										uniqueid	Question	CorrectValue
+										198
+	use			correctedValues.csv		""
+										uniqueid	Question	CorrectValue
+										610
+;
+#d cr
+if c(stata_version) < 12 {
+	#d ;
+	loc bad `bad'
+
+	excel		correctedValues.csv		firstrow
+										uniqueid	Question	CorrectValue
+										199
+	excel		correctedValues.csv		""
+										uniqueid	""			""
+										198
+	;
+	#d cr
+}
+else {
+	tempfile first_var letters
+	export excel using `first_var', first(var)
+	export excel using `letters'
+	#d ;
+	loc good `good'
+
+	excel		`first_var'				firstrow
+										uniqueid	Question	CorrectValue
+	excel		`first_var'				"firstrow clear"
+										uniqueid	Question	CorrectValue
+	excel		`first_var'				"firstrow case(lower)"
+										uniqueid	question	correctvalue
+	excel		`letters'				""
+										A			B			C
+	;
+	loc bad `bad'
+
+	excel		`first_var'				""
+										uniqueid	""			""
+										198
+	excel		`first_var'				firstrow
+										uniqueid	""			""
+										198
+	excel		`first_var'				"firstrow clear clear"
+										uniqueid	Question	CorrectValue
+										198
+	excel		`first_var'				"firstrow not_an_option"
+										uniqueid	Question	CorrectValue
+										198
+	excel		`first_var'				"firstrow allstring"
+										uniqueid	Question	CorrectValue
+										106
+	excel		correctedValues.csv		firstrow
+										uniqueid	Question	CorrectValue
+										603
+	;
+	#d cr
+}
+foreach list in good bad {
+	while `:list sizeof `list'' {
+		gettoken cmd		`list' : `list'
+		gettoken fn			`list' : `list'
+		gettoken import		`list' : `list'
+		gettoken id			`list' : `list'
+		gettoken var		`list' : `list'
+		gettoken val		`list' : `list'
+		if "`list'" == "bad" {
+			gettoken rc		`list' : `list'
+			conf n `rc'
+		}
+
+		loc cmds "`cmd'"
+		if inlist("`cmd'", "insheet", "") ///
+			loc cmds "`cmds' """
+		foreach cmd_opt of loc cmds {
+			u firstEntry, clear
+
+			foreach opt in id var val import {
+				if "``opt''" == "" ///
+					loc `opt'_opt
+				else ///
+					loc `opt'_opt `opt'(``opt'')
+			}
+			loc command readreplace using `fn', ///
+				`id_opt' `var_opt' `val_opt' `cmd_opt' `import_opt'
+			di as res _n `"{p 0 4 2}`command'{p_end}"'
+
+			if "`list'" == "good" {
+				if "`id'" != "uniqueid" ///
+					ren uniqueid `id'
+				`command'
+				assert r(N) == 12
+				if "`id'" != "uniqueid" ///
+					ren `id' uniqueid
+				compdta `expected'
+
+			}
+			else if "`list'" == "bad" {
+				rcof `"noi `command'"' == `rc'
+			}
+			else {
+				err 9
+			}
+		}
+	}
+}
+rcof "noi readreplace using correctedValues.csv, id(uniqueid) insheet" == 198
+cd ..
+
 
 /* -------------------------------------------------------------------------- */
 					/* user mistakes		*/
@@ -237,7 +411,7 @@ u firstEntry, clear
 loc readreplace readreplace using correctedValues.csv, id(uniqueid)
 rcof "noi `readreplace'" == 198
 * Works under 2.0.0 syntax
-`readreplace' var(Question) val(CorrectValue)
+`readreplace' var(question) val(correctvalue)
 assert r(N) == 12
 cd ..
 
@@ -248,7 +422,7 @@ rcof "noi readreplace using too_few.csv,  id(uniqueid)" == 198
 loc readreplace readreplace using too_many.csv, id(uniqueid)
 rcof "noi `readreplace'" == 198
 * Works under 2.0.0 syntax
-`readreplace' var(Question) val(CorrectValue)
+`readreplace' var(question) val(correctvalue)
 assert r(N) == 12
 cd ..
 
@@ -258,7 +432,7 @@ insheet using correctedValues.csv, c n case clear
 assert Question == "district" in 1
 u firstEntry, clear
 readreplace using correctedValues.csv, ///
-	id(uniqueid) var(Question) val(CorrectValue)
+	id(uniqueid) var(question) val(correctvalue)
 #d ;
 foreach q in
 	distric
@@ -280,7 +454,7 @@ foreach q in
 	foreach varabbrev in "" varabbrev {
 		#d ;
 		rcof "noi `varabbrev' readreplace using `t',
-			id(uniqueid) var(Question) val(CorrectValue)"
+			id(uniqueid) var(question) val(correctvalue)"
 			== 111;
 		#d cr
 		compdta firstEntry
@@ -325,16 +499,16 @@ u firstEntry, clear
 loc rr readreplace using correctedValues.csv, id(uniqueid)
 `rr'
 assert r(N) == 12
-`rr' var(Question) val(CorrectValue)
+`rr' var(question) val(correctvalue)
 assert !r(N)
-rcof "noi `rr' var(Question)" == 198
-rcof "noi `rr' val(CorrectValue)" == 198
+rcof "noi `rr' var(question)" == 198
+rcof "noi `rr' val(correctvalue)" == 198
 cd ..
 
 * Test 16
 cd 16
 u firstEntry, clear
-loc opts id(uniqueid) var(Question) val(CorrectValue)
+loc opts id(uniqueid) var(question) val(correctvalue)
 rcof "noi readreplace using no_id.csv,  `opts'" == 111
 rcof "noi readreplace using no_var.csv, `opts'" == 111
 rcof "noi readreplace using no_val.csv, `opts'" == 111
@@ -346,12 +520,12 @@ insheet using correct.csv, c n case clear
 assert _N == 1
 assert Question == CorrectValue
 u firstEntry, clear
-readreplace using correct.csv, id(uniqueid) var(Question) val(CorrectValue)
+readreplace using correct.csv, id(uniqueid) var(question) val(correctvalue)
 assert r(N) == 1
 u firstEntry, clear
 #d ;
 rcof "noi readreplace using correct.csv,
-	id(uniqueid) var(Question) val(Question)"
+	id(uniqueid) var(question) val(question)"
 	== 198;
 #d cr
 cd ..
@@ -365,17 +539,36 @@ replace uniqueid = "firstname" if uniqueid == "1"
 cou if uniqueid == "firstname"
 assert r(N)
 preserve
-readreplace using correct.csv, id(uniqueid) var(Question) val(CorrectValue)
+readreplace using correct.csv, ///
+	id(uniqueid) var(question) val(correctvalue) import(n)
 assert r(N) == 1
 restore
 #d ;
 rcof "noi readreplace using correct.csv,
-	id(uniqueid) var(uniqueid) val(CorrectValue)"
+	id(uniqueid) var(uniqueid) val(correctvalue) import(n)"
 	== 198;
 rcof "noi readreplace using correct.csv,
-	id(uniqueid) var(Question) val(uniqueid)"
+	id(uniqueid) var(question) val(uniqueid) import(n)"
 	== 198;
 #d cr
+cd ..
+
+* Test 20
+cd 20
+u firstEntry, clear
+readreplace using correctedValues.csv, ///
+	id(uniqueid) var(question) val(correctvalue) insheet
+loc opts insheet use excel
+while `:list sizeof opts' {
+	gettoken opt1 opts : opts
+	foreach opt2 of loc opts {
+		#d ;
+		rcof "noi readreplace using correctedValues.csv,
+			id(uniqueid) var(question) val(correctvalue) `opt1' `opt2'"
+			== 198;
+		#d cr
+	}
+}
 cd ..
 
 

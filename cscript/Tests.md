@@ -101,4 +101,14 @@ Contributions of new tests are welcome. When adding a test to the cscript, pleas
 	<td>User mistakes</td>
 	<td>Specify the same variable to options <code>id()</code> and <code>variable()</code> and to <code>id()</code> and <code>value()</code>.</td>
 </tr>
+<tr>
+	<td>19</td>
+	<td>Basic</td>
+	<td>Simple tests of options <code>use</code>, <code>insheet</code>, <code>excel</code>, and <code>import()</code>.</td>
+</tr>
+<tr>
+	<td>20</td>
+	<td>User mistakes</td>
+	<td>Specify multiple import command options.</td>
+</tr>
 </table>
