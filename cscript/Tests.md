@@ -111,4 +111,9 @@ Contributions of new tests are welcome. When adding a test to the cscript, pleas
 	<td>User mistakes</td>
 	<td>Specify multiple import command options.</td>
 </tr>
+<tr>
+	<td>21</td>
+	<td>User mistakes</td>
+	<td>When the ID variable has different names in the dataset in memory and the replacements file, specify a <code>varlist</code> to option <code>id()</code> that matches both names.</td>
+</tr>
 </table>

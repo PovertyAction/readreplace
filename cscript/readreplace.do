@@ -571,6 +571,20 @@ while `:list sizeof opts' {
 }
 cd ..
 
+* Test 21
+cd 21
+u firstEntry, clear
+foreach id in uniqueid unique* {
+	foreach varabbrev in "" varabbrev {
+		#d ;
+		rcof "noi `varabbrev' readreplace using correctedValues.csv,
+			id(`id') var(question) val(correctvalue)"
+			== 111;
+		#d cr
+	}
+}
+cd ..
+
 
 /* -------------------------------------------------------------------------- */
 					/* finish up			*/

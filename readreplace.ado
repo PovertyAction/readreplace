@@ -224,13 +224,13 @@ pr import_replacements, rclass
 		* Contrary to the option's name, the variable list specified to
 		* -id()- need not uniquely identify observations,
 		* in either the dataset in memory or the replacements file.
-		loc 0 , id(`id')
-		loc syntax syntax, id(varlist)
-		cap `syntax'
-		if _rc {
-			di as err "replacements file:"
-			`syntax'
-			/*NOTREACHED*/
+		foreach var of loc id {
+			cap conf var `var', exact
+			if _rc {
+				di as err "variable `var' not found in replacements file" _n ///
+					"(error in option {bf:id()})"
+				ex 111
+			}
 		}
 
 		* Check -variable()- and -value()-.
