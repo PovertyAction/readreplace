@@ -148,6 +148,7 @@ u firstEntry, clear
 readreplace using correctedValues.csv, id(uniqueid)
 assert r(N) == 12
 assert "`r(varlist)'" != ""
+conf mat r(changes)
 insheet using correctedValues.csv, c n case clear
 drop in 1/L
 tempfile t
@@ -156,6 +157,8 @@ u firstEntry, clear
 readreplace using `t', id(uniqueid)
 assert !r(N)
 assert "`r(varlist)'" == ""
+cap conf mat r(changes)
+assert _rc
 compdta firstEntry
 cd ..
 
@@ -425,7 +428,8 @@ cd ..
 
 * Test 22
 cd 22
-* Basic test of these more complicated datasets
+* Basic tests of these more complicated datasets
+* Numeric variables
 u gen_correct, clear
 drop if var == "string"
 tempfile nostr
@@ -446,6 +450,29 @@ tempfile expected
 sa `expected'
 u gen_master, clear
 readreplace using `nostr', id(numid1) var(var) val(correct) u
+compdta `expected'
+* String variables
+u gen_correct, clear
+keep if var == "string"
+tempfile stronly
+sa `stronly'
+u gen_master, clear
+gen order = _n
+assert "`:char _dta[]'" == ""
+merge numid1 using `stronly', sort keep(correct)
+loc chars : char _dta[]
+foreach char of loc chars {
+	char _dta[`char']
+}
+assert _merge != 2
+replace string = correct if _merge == 3
+drop correct _merge
+sort order
+drop order
+tempfile expected
+sa `expected'
+u gen_master, clear
+readreplace using `stronly', id(numid1) var(var) val(correct) u
 compdta `expected'
 * Perfect IDs
 if c(stata_version) >= 13 {
@@ -479,6 +506,30 @@ u gen_master, clear
 readreplace using gen_correct, id(strid3) variable(var) value(correct) u
 assert r(N) == `N_imperfect'
 compdta `expected'
+cd ..
+
+* Test 25
+cd 25
+u firstEntry, clear
+drop in 1/L
+tempfile noobs
+sa `noobs'
+#d ;
+rcof "noi readreplace using correctedValues.csv,
+	id(uniqueid) var(question) val(correctvalue)"
+	== 198;
+#d cr
+insheet using correctedValues.csv, c n clear
+drop in 1/L
+tempfile correct_noobs
+outsheet using `correct_noobs', c
+u `noobs', clear
+readreplace using `correct_noobs', id(uniqueid) var(question) val(correctvalue)
+assert !r(N)
+assert "`r(varlist)'" == ""
+cap conf mat r(changes)
+assert _rc
+compdta `noobs'
 cd ..
 
 
@@ -527,9 +578,10 @@ foreach q in
 	distric*
 	d~strict
 	district-district
+	"district gender"
+	_all
 	DoesNotExist
 	""
-	"embedded space"
 {;
 	#d cr
 	qui insheet using correctedValues.csv, c n case clear
