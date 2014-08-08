@@ -2,7 +2,7 @@
 pr readreplace, rclass
 	vers 10.1
 
-	syntax using, id(varname) [DIsplay]
+	syntax using, id(varname) [DIsplay *]
 
 	* "m" suffix for "master"
 	unab vars_m : _all
@@ -21,26 +21,9 @@ pr readreplace, rclass
 	tempfile idvals
 	qui sa `idvals'
 
-	* Import the replacements file.
-	loc cmd insheet `using', clear
-	cap `cmd'
-	if _rc {
-		loc rc = _rc
-		* Display the error message.
-		cap noi `cmd'
-		ex `rc'
-	}
-
-	unab rest : _all
-	gettoken first		rest : rest
-	gettoken variable	rest : rest
-	gettoken value : rest
-
-	if "`first'" != "`id'" | c(k) != 3 {
-		di _newline as err "Error: Using file has improper format"
-		di as txt "The using file must have the format: " as res "`id',varname,correct_value"
-		ex 198
-	}
+	import_replacements `using', id(`id') `options'
+	loc variable	`r(variable)'
+	loc value		`r(value)'
 
 	* "r" suffix for "replacements file"
 	qui levelsof `variable', loc(vars_r) miss
@@ -115,7 +98,7 @@ pr readreplace, rclass
 				qui cou if `variable' == "`var'" & mi(real(`trimval'))
 				loc miss_num = r(N)
 				if `miss_str' != `miss_num' {
-					di as err "new value variable: cannot replace " ///
+					di as err "option value(): cannot replace " ///
 						"numeric variable `var' with string value"
 					ex 109
 				}
@@ -163,6 +146,122 @@ pr readreplace, rclass
 
 	restore, not
 end
+
+
+/* -------------------------------------------------------------------------- */
+					/* import				*/
+
+pr import_replacements, rclass
+	syntax using, id(varname) [VARiable(str) VALue(str) ///
+		Use insheet EXCel import(str asis)]
+
+	* Version 1 syntax
+	if "`variable'`value'" == "" {
+		di as txt "note: you are using old {cmd:readreplace} syntax; " ///
+			"see {helpb readreplace} for new syntax."
+
+		syntax using, id(varname)
+
+		loc insheet insheet
+		loc import comma names case
+	}
+	* Version 2.0.0
+	else {
+		* Check -variable()- and -value()-.
+		if "`variable'" != "" & "`value'" == "" {
+			loc 0
+			syntax, value(varname)
+			/*NOTREACHED*/
+		}
+		if "`variable'" == "" & "`value'" != "" {
+			loc 0
+			syntax, variable(varname)
+			/*NOTREACHED*/
+		}
+
+		if "`use'`insheet'`excel'" == "" ///
+			loc insheet insheet
+
+		* Check -use-, -insheet-, and -excel-.
+		if ("`use'" != "") + ("`insheet'" != "") + ("`excel'" != "") != 1 {
+			di as err "options use, insheet, and excel are mutually exclusive"
+			ex 198
+		}
+	}
+
+	* Import the replacements file.
+	loc importexcel = cond("`excel'" != "", "import excel", "")
+	loc clear clear
+	loc import : list import - clear
+	loc cmd `use'`insheet'`importexcel' `using', clear `import'
+	cap `cmd'
+	if _rc {
+		loc rc = _rc
+		* Display the error message.
+		cap noi `cmd'
+		di as err "(error in option {bf:`use'`insheet'`excel'})"
+		ex `rc'
+	}
+
+	* Checks based on -readreplace- syntax version
+	* Version 1
+	if "`variable'`value'" == "" {
+		unab rest : _all
+		gettoken first		rest : rest
+		gettoken variable	rest : rest
+		gettoken value : rest
+
+		if "`first'" != "`id'" | c(k) != 3 {
+			di as err "Error: Using file has improper format"
+			di as err "The using file must have the format: " ///
+				as res "`id',varname,correct_value"
+			ex 198
+		}
+	}
+	* Version 2.0.0
+	else {
+		* Check -id()-.
+		* Contrary to the option's name, the variable list specified to
+		* -id()- need not uniquely identify observations,
+		* in either the dataset in memory or the replacements file.
+		foreach var of loc id {
+			cap conf var `var', exact
+			if _rc {
+				di as err "variable `var' not found in replacements file" _n ///
+					"(error in option {bf:id()})"
+				ex 111
+			}
+		}
+
+		* Check -variable()- and -value()-.
+
+		loc 0 , variable(`variable')
+		syntax, variable(varname)
+		loc 0 , value(`value')
+		syntax, value(varname)
+
+		if "`variable'" == "`value'" {
+			di as err "variable `variable' cannot be specified to " ///
+				"both options variable() and value()"
+			ex 198
+		}
+
+		* Check -id()-, -variable()-, and -value()-.
+		foreach opt in variable value {
+			if `:list `opt' in id' {
+				di as err "variable ``opt'' cannot be specified to " ///
+					"both options id() and `opt'()"
+				ex 198
+			}
+		}
+	}
+
+	ret loc variable	`variable'
+	ret loc value		`value'
+end
+
+					/* import				*/
+/* -------------------------------------------------------------------------- */
 
 
 /* -------------------------------------------------------------------------- */

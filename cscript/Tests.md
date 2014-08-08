@@ -81,4 +81,39 @@ Contributions of new tests are welcome. When adding a test to the cscript, pleas
 	<td>User mistakes</td>
 	<td>Specify a replacements file whose variable name variable includes a numeric variable but whose new value variable specifies a string value for that variable. Blank values (<code>""</code>) are interpreted as string, and are not converted to <code>sysmiss</code>.</td>
 </tr>
+<tr>
+	<td>15</td>
+	<td>User mistakes</td>
+	<td>Specify option <code>variable()</code> without option <code>value()</code>, and vice versa.</td>
+</tr>
+<tr>
+	<td>16</td>
+	<td>User mistakes</td>
+	<td>Specify nonexistent variables to options <code>id()</code>, <code>variable()</code>, and <code>value()</code>.</td>
+</tr>
+<tr>
+	<td>17</td>
+	<td>User mistakes</td>
+	<td>Specify the same variable to options <code>variable()</code> and <code>value()</code>.</td>
+</tr>
+<tr>
+	<td>18</td>
+	<td>User mistakes</td>
+	<td>Specify the same variable to options <code>id()</code> and <code>variable()</code> and to <code>id()</code> and <code>value()</code>.</td>
+</tr>
+<tr>
+	<td>19</td>
+	<td>Basic</td>
+	<td>Simple tests of options <code>use</code>, <code>insheet</code>, <code>excel</code>, and <code>import()</code>.</td>
+</tr>
+<tr>
+	<td>20</td>
+	<td>User mistakes</td>
+	<td>Specify multiple import command options.</td>
+</tr>
+<tr>
+	<td>21</td>
+	<td>User mistakes</td>
+	<td>When the ID variable has different names in the dataset in memory and the replacements file, specify a <code>varlist</code> to option <code>id()</code> that matches both names.</td>
+</tr>
 </table>
