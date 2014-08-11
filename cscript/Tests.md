@@ -116,4 +116,19 @@ Contributions of new tests are welcome. When adding a test to the cscript, pleas
 	<td>User mistakes</td>
 	<td>When the ID variable has different names in the dataset in memory and the replacements file, specify a <code>varlist</code> to option <code>id()</code> that matches both names.</td>
 </tr>
+<tr>
+	<td>22</td>
+	<td>Basic</td>
+	<td>Simple tests of ID <code>varlists</code></td>
+</tr>
+<tr>
+	<td>23</td>
+	<td>User mistakes</td>
+	<td>Specify a replacements file whose variable name variable contains an ID variable.</td>
+</tr>
+<tr>
+	<td>24</td>
+	<td>User mistakes</td>
+	<td>Specify a <code>varlist</code> to option <code>id()</code> while using version 1 syntax.</td>
+</tr>
 </table>

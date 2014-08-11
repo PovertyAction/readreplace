@@ -2,7 +2,7 @@
 pr readreplace, rclass
 	vers 10.1
 
-	syntax using, id(varname) [DIsplay *]
+	syntax using, id(varlist) [DIsplay *]
 
 	* "m" suffix for "master"
 	unab vars_m : _all
@@ -160,7 +160,7 @@ end
 					/* import				*/
 
 pr import_replacements, rclass
-	syntax using, id(varname) [VARiable(str) VALue(str) ///
+	syntax using, id(varlist) [VARiable(str) VALue(str) ///
 		Use insheet EXCel import(str asis)]
 
 	* Version 1 syntax

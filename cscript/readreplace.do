@@ -55,6 +55,39 @@ glo FASTCDPATH : copy loc FASTCDPATH
 
 cd tests
 
+loc dirs : dir . dir *
+foreach dir of loc dirs {
+	* Delete generated datasets.
+	loc dtas : dir "`dir'" file "gen*.dta"
+	foreach dta of loc dtas {
+		erase "`dir'/`dta'"
+	}
+
+	* Create generated datasets.
+	cap conf f "`dir'/gen.do"
+	if !_rc {
+		cd "`dir'"
+		do gen
+		cd ..
+	}
+}
+
+pr repl2do
+	syntax using, id(varname num) VARiable(varname str) VALue(varname str)
+
+	preserve
+
+	assert `value' == strofreal(real(`value'), "%24.0g")
+
+	qui tostring `id', replace
+	tempvar cmd
+	gen `cmd' = "replace " + `variable' + " = " + `value' + ///
+		" if `id' == " + `id'
+	assert strlen(`cmd') < c(maxstrvarlen)
+
+	qui outsheet `cmd' `using', non noq
+end
+
 
 /* -------------------------------------------------------------------------- */
 					/* basic				*/
@@ -62,13 +95,9 @@ cd tests
 * Test 1
 cd 1
 insheet using correctedValues.csv, c n case clear
-conf numeric var uniqueid CorrectValue
-tostring uniqueid CorrectValue, replace
-conf str var uniqueid CorrectValue
-gen cmd = "replace " + Question + " = " + CorrectValue + ///
-	" if uniqueid == " + uniqueid
+tostring CorrectValue, replace
 tempfile do
-outsheet cmd using `do', non noq
+repl2do using `do', id(uniqueid) var(Question) val(CorrectValue)
 u firstEntry, clear
 do `do'
 tempfile expected_dta
@@ -394,6 +423,55 @@ foreach list in good bad {
 rcof "noi readreplace using correctedValues.csv, id(uniqueid) insheet" == 198
 cd ..
 
+* Test 22
+cd 22
+* Basic test of these more complicated datasets
+u gen_correct, clear
+drop if var == "string"
+tempfile nostr
+sa `nostr'
+tempfile do
+repl2do using `do', id(numid1) var(var) val(correct)
+u gen_master, clear
+do `do'
+* Destroy the sortlist.
+d, varl
+assert "`r(sortlist)'" != ""
+gen order = _n
+sort order
+drop order
+d, varl
+assert "`r(sortlist)'" == ""
+tempfile expected
+sa `expected'
+u gen_master, clear
+readreplace using `nostr', id(numid1) var(var) val(correct) u
+compdta `expected'
+* Perfect IDs
+u gen_master, clear
+readreplace using gen_correct, id(numid1) var(var) val(correct) u
+loc N_perfect = r(N)
+tempfile expected
+sa `expected'
+foreach id in numid2_* strid1 strid2_* mixid* {
+	u gen_master, clear
+	readreplace using gen_correct, id(`id') var(var) val(correct) u
+	assert r(N) == `N_perfect'
+	compdta `expected'
+}
+* Imperfect IDs
+u gen_master, clear
+readreplace using gen_correct, id(numid3) variable(var) value(correct) u
+loc N_imperfect = r(N)
+assert reldif(`N_perfect', `N_imperfect') < .01
+tempfile expected
+sa `expected'
+u gen_master, clear
+readreplace using gen_correct, id(strid3) variable(var) value(correct) u
+assert r(N) == `N_imperfect'
+compdta `expected'
+cd ..
+
 
 /* -------------------------------------------------------------------------- */
 					/* user mistakes		*/
@@ -465,18 +543,50 @@ cd ..
 * Test 7
 cd 7
 u firstEntry, clear
-readreplace using correctedValues.csv, id(uniqueid)
+isid uniqueid
+gen id2_1 = cond(_n <= _N / 2, 1, 2)
+gen order = _n
+bys id2_1: gen id2_2 = _n
+sort order
+drop order
 assert uniqueid <= 1000
+assert id2_2    <= 1000
+tempfile first
+sa `first'
 insheet using correctedValues.csv, c n case clear
 assert uniqueid <= 1000
+gen order = _n
+merge uniqueid using `first', sort uniqus keep(id2_*)
+drop if _merge == 2
+assert _merge == 3
+drop _merge
+sort order
+drop order
+tempfile good
+outsheet using `good', c
 forv i = 1/2 {
-	replace uniqueid = 1000 + `i' in `i'
+	foreach var of var uniqueid id2_2 {
+		replace `var' = 1000 + `i' in `i'
+	}
 	tempfile bad`i'
 	outsheet using `bad`i'', c
 }
-u firstEntry, clear
-forv i = 1/2 {
-	rcof "noi readreplace using `bad`i'', id(uniqueid)" == 198
+u `first', clear
+readreplace using `good', id(uniqueid) var(question) val(correctvalue)
+tempfile expected
+sa `expected'
+u `first', clear
+readreplace using `good', id(id2_*) var(question) val(correctvalue)
+compdta `expected'
+u `first', clear
+foreach id in uniqueid id2_* {
+	forv i = 1/2 {
+		#d ;
+		rcof "noi readreplace using `bad`i'',
+			id(`id') var(question) val(correctvalue)"
+			== 198;
+		#d cr
+	}
 }
 cd ..
 
@@ -583,6 +693,36 @@ foreach id in uniqueid unique* {
 		#d cr
 	}
 }
+cd ..
+
+* Test 23
+cd 23
+u firstEntry, clear
+#d ;
+rcof "noi readreplace using correctedValues.csv,
+	id(uniqueid) var(question) val(correctvalue)"
+	== 198;
+#d cr
+cd ..
+
+* Test 24
+cd 22
+u gen_correct, clear
+drop if var == "string"
+tempfile nostr_dta nostr_numid1 nostr_numid2
+sa `nostr_dta'
+order *id* var correct
+outsheet numid1  var correct using `nostr_numid1', c
+outsheet numid2* var correct using `nostr_numid2', c
+u gen_master, clear
+readreplace using `nostr_dta', id(numid2*) var(var) val(correct) u
+tempfile expected
+sa `expected'
+u gen_master, clear
+readreplace using `nostr_numid1', id(numid1)
+compdta `expected'
+u gen_master, clear
+rcof "noi readreplace using `nostr_numid2', id(numid2*)" == 103
 cd ..
 
 
