@@ -448,12 +448,21 @@ u gen_master, clear
 readreplace using `nostr', id(numid1) var(var) val(correct) u
 compdta `expected'
 * Perfect IDs
+if c(stata_version) >= 13 {
+	foreach dta in gen_master gen_correct {
+		u "`dta'", clear
+		gen stridL = strid1 + c(maxstrvarlen) * "x"
+		assert "`:type stridL'" == "strL"
+		sa, replace
+	}
+	loc stridL stridL
+}
 u gen_master, clear
 readreplace using gen_correct, id(numid1) var(var) val(correct) u
 loc N_perfect = r(N)
 tempfile expected
 sa `expected'
-foreach id in numid2_* strid1 strid2_* mixid* {
+foreach id in numid2_* strid1 strid2_* mixid* `stridL' {
 	u gen_master, clear
 	readreplace using gen_correct, id(`id') var(var) val(correct) u
 	assert r(N) == `N_perfect'

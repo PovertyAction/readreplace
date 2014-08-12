@@ -112,28 +112,6 @@ pr readreplace, rclass
 				}
 			}
 		}
-
-		* ID values in the replacements file but not the dataset in memory
-		tempvar order merge
-		gen `order' = _n
-		qui merge `id' using `idvals', sort uniqus _merge(`merge')
-		qui drop if `merge' == 2
-		qui cou if `merge' == 1
-		if r(N) {
-			loc values = plural(r(N), "value")
-			loc variables = plural(`:list sizeof id', "variable")
-			di as err "{p}"
-			di as err "option id(): `values' of `variables' `id' in"
-			di as err "replacements file not found in dataset in memory"
-			di as err "{p_end}"
-			loc max 1
-			foreach var of loc id {
-				loc max = max(`max', strlen("`var'"))
-			}
-			li `id' if `merge' == 1, ab(`max') noo
-			ex 198
-		}
-		sort `order'
 	}
 
 	if "`display'" != "" {
@@ -520,10 +498,11 @@ void readreplace(
 	`lclname' _varlist, `lclname' _changes_N, `lclname' _changes_mat)
 {
 	// "repl" for "replacement"
-	`RS' id_k, repl_N, repl_k, first, last, i, j
+	`RS' id_k, repl_N, repl_k, i, j
 	`RR' changes
-	`RC' value_num, obsnum, touseobs
-	`SS' order, prev, changes_name
+	`RC' value_num, touseobs
+	`RM' idx, id_obs
+	`SS' repl_file, order, prev, changes_name
 	`SR' sortlist, id_names, repl_names
 	`SC' variable, value
 	`TS' val
@@ -558,8 +537,11 @@ void readreplace(
 
 	repl_N = st_nobs()
 
+	repl_file = st_tempfilename()
+	stata("qui sa " + repl_file)
 	stata("restore, preserve")
 
+	// No observations in the replacements file
 	if (!repl_N) {
 		st_local(_varlist, "")
 		st_local(_changes_N, "0")
@@ -583,6 +565,25 @@ void readreplace(
 		id_m[i] = &st_copy_view(id_view)
 	}
 
+	// Determine which observations to replace for each replacement.
+	id_obs = J(repl_N, 2, .)
+	for (i = 1; i <= repl_N; i++) {
+		idx = binary_search_first(id_m, id_r, i)
+		if (idx == J(0, 0, .)) {
+			errprintf("{p}")
+			errprintf(sprintf("option id(): observation of variable%s %s in ",
+				(id_k > 1) * "s", invtokens(id_names)))
+			errprintf("replacements file not found in dataset in memory")
+			errprintf("{p_end}\n")
+			stata(sprintf("qui u %s, clear", repl_file))
+			stata(sprintf("li %s in %f, ab(%f) noo",
+				invtokens(id_names), i, max(strlen(id_names))))
+			exit(198)
+		}
+		id_obs[i, 1] = idx
+		id_obs[i, 2] = binary_search_last(id_m, id_r, i)
+	}
+
 	// Promote variable types.
 	repl_names = uniqrows(variable)'
 	repl_k = length(repl_names)
@@ -596,7 +597,6 @@ void readreplace(
 	changes = J(1, repl_k, 0)
 	prev = ""
 	j = 0
-	obsnum = 1::st_nobs()
 	for (i = 1; i <= repl_N; i++) {
 		// Change in variable name
 		if (variable[i] != prev) {
@@ -610,12 +610,7 @@ void readreplace(
 			isstrL = st_vartype(variable[i]) == "strL"
 		}
 
-		// Select observations by ID.
-		first = binary_search_first(id_m, id_r, i)
-		last  = binary_search_last( id_m, id_r, i)
-		touseobs = select(obsnum, obsnum :>= first :& obsnum :<= last)
-
-		// Changes
+		touseobs = id_obs[i, 1]::id_obs[i, 2]
 		val = isnum ? value_num[i] : value[i]
 		changes[j] = changes[j] + sum(repl_view[touseobs] :!= val)
 		if (isstrL)
