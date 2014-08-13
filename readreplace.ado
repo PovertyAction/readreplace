@@ -2,7 +2,7 @@
 pr readreplace, rclass
 	vers 10.1
 
-	syntax using, id(varname) [DIsplay *]
+	syntax using, id(varlist) [DIsplay *]
 
 	* "m" suffix for "master"
 	unab vars_m : _all
@@ -41,6 +41,14 @@ pr readreplace, rclass
 		di as err `"`first', is not a variable in memory"'
 		di as err "{p_end}"
 		ex 111
+	}
+	loc overlap : list vars_r & id
+	if "`overlap'" != "" {
+		di as err "{p}"
+		di as err "option variable(): variable `variable' cannot contain"
+		di as err "a variable name specified to option id()"
+		di as err "{p_end}"
+		ex 198
 	}
 
 	if _N {
@@ -104,28 +112,6 @@ pr readreplace, rclass
 				}
 			}
 		}
-
-		* ID values in the replacements file but not the dataset in memory
-		tempvar order merge
-		gen `order' = _n
-		qui merge `id' using `idvals', sort uniqus _merge(`merge')
-		qui drop if `merge' == 2
-		qui cou if `merge' == 1
-		if r(N) {
-			loc values = plural(r(N), "value")
-			loc variables = plural(`:list sizeof id', "variable")
-			di as err "{p}"
-			di as err "option id(): `values' of `variables' `id' in"
-			di as err "replacements file not found in dataset in memory"
-			di as err "{p_end}"
-			loc max 1
-			foreach var of loc id {
-				loc max = max(`max', strlen("`var'"))
-			}
-			li `id' if `merge' == 1, ab(`max') noo
-			ex 198
-		}
-		sort `order'
 	}
 
 	if "`display'" != "" {
@@ -152,7 +138,7 @@ end
 					/* import				*/
 
 pr import_replacements, rclass
-	syntax using, id(varname) [VARiable(str) VALue(str) ///
+	syntax using, id(varlist) [VARiable(str) VALue(str) ///
 		Use insheet EXCel import(str asis)]
 
 	* Version 1 syntax
@@ -327,6 +313,19 @@ void st_sviewL(`TM' V, `RM' i, `TR' j)
 	}
 }
 
+// Returns a duplicate of view V.
+`TM' st_copy_view(`TM' V)
+{
+	`TM' cp
+
+	pragma unset cp
+	st_subview(cp, V, ., .)
+	assert(isview(cp) == isview(V))
+	assert((&cp) != (&V))
+
+	return(cp)
+}
+
 // Returns the list of numeric types that can store the values of X.
 // The list is ordered by decreasing precision (for noninteger X) and
 // increasing size, meaning that the first element is often the optimal type.
@@ -407,34 +406,90 @@ void st_promote_type(`SS' var, `TM' X)
 /* -------------------------------------------------------------------------- */
 					/* make replacements	*/
 
-void split_rowvector(`TR' v, `TR' v_if_true, `TR' v_if_false,
-	pointer(`boolean' function) splitter, |`RR' splitres)
+/* For two lists of colvectors, -pcomp()- compares the idx1-th element of
+the colvectors of list1 to the idx2-th element of the colvectors of list2.
+-pcomp()- compares first the idx1-th element of the first colvector of list1 to
+the idx2-th element of the first colvector of list2, then the idx1-th element of
+the second colvector of list1 to the idx2-th element of the second colvector of
+list2, and so on, until one of the pairs are unequal or
+all the colvectors have been compared. If a list1 value is less than
+the corresponding list2 value, -pcomp()- returns -1; if it is greater than the
+corresponding value, it returns 1; and if all pairs are equal, it returns 0. */
+`RS' pcomp(
+	pointer(`TC') rowvector list1, `RS' idx1,
+	pointer(`TC') rowvector list2, `RS' idx2)
 {
 	`RS' n, i
-	`SS' eltype
+	`TS' val1, val2
 
-	eltype = eltype(v)
-	if (eltype == "real")
-		v_if_true = v_if_false = J(1, 0, .)
-	else if (eltype == "string")
-		v_if_true = v_if_false = J(1, 0, "")
-	else
-		_error("invalid eltype")
-
-	n = length(v)
-	splitres = J(1, n, `False')
+	n = length(list1)
 	for (i = 1; i <= n; i++) {
-		if ((*splitter)(v[i])) {
-			v_if_true = v_if_true, v[i]
-			splitres[i] = `True'
-		}
-		else
-			v_if_false = v_if_false, v[i]
+		val1 = (*list1[i])[idx1]
+		val2 = (*list2[i])[idx2]
+		if (val1 < val2)
+			return(-1)
+		if (val1 > val2)
+			return(1)
 	}
+
+	return(0)
 }
 
-`boolean' st_isnumvar_cp(`TS' var)
-	return(st_isnumvar(var))
+// -binary_search_first()- searches a sorted list of colvectors, tosearch, for
+// the idx-th element of the colvectors of another list, target. It returns
+// the index of the first element of the colvectors of tosearch that
+// equals the element of target.
+`RM' binary_search_first(pointer(`TC') rowvector tosearch,
+	pointer(`TC') rowvector target, `RS' idx)
+{
+	`RS' lo, hi, mid, comp
+	`RM' first
+
+	lo = 1
+	hi = length(*tosearch[1])
+	while (lo <= hi) {
+		mid = floor((lo + hi) / 2)
+		comp = pcomp(target, idx, tosearch, mid)
+		if (comp < 0)
+			hi = mid - 1
+		else if (comp == 0) {
+			first = mid
+			hi = mid - 1
+		}
+		else
+			lo = mid + 1
+	}
+
+	return(first)
+}
+
+// -binary_search_last()- searches a sorted list of colvectors, tosearch, for
+// the idx-th element of the colvectors of another list, target. It returns
+// the index of the last element of the colvectors of tosearch that
+// equals the element of target.
+`RM' binary_search_last(pointer(`TC') rowvector tosearch,
+	pointer(`TC') rowvector target, `RS' idx)
+{
+	`RS' lo, hi, mid, comp
+	`RM' last
+
+	lo = 1
+	hi = length(*tosearch[1])
+	while (lo <= hi) {
+		mid = floor((lo + hi) / 2)
+		comp = pcomp(target, idx, tosearch, mid)
+		if (comp > 0)
+			lo = mid + 1
+		else if (comp == 0) {
+			last = mid
+			lo = mid + 1
+		}
+		else
+			hi = mid - 1
+	}
+
+	return(last)
+}
 
 void readreplace(
 	/* variable names */
@@ -443,18 +498,18 @@ void readreplace(
 	`lclname' _varlist, `lclname' _changes_N, `lclname' _changes_mat)
 {
 	// "repl" for "replacement"
-	`RS' id_num_k, id_str_k, repl_N, repl_k, i, j
+	`RS' id_k, repl_N, repl_k, i, j
 	`RR' changes
-	`RC' value_num, obsnum, touse, touseobs
-	// "r" suffix for "replacements file"; "m" suffix for "master."
-	`RM' id_num_r, id_num_m
-	`SS' prev, changes_name
-	`SR' sortlist, id_num_names, id_str_names, repl_names
+	`RC' value_num, touseobs
+	`RM' idx, id_obs
+	`SS' repl_file, order, prev, changes_name
+	`SR' sortlist, id_names, repl_names
 	`SC' variable, value
-	`SM' id_str_r, id_str_m
 	`TS' val
-	`TC' repl_view
+	`TC' id_view, repl_view
 	`boolean' isnum, isstrL
+	// "r" suffix for "replacements file"; "m" suffix for "master."
+	pointer(`TC') rowvector id_r, id_m
 
 	// Save the replacements file.
 
@@ -464,15 +519,16 @@ void readreplace(
 	assert(sortlist[1] == st_local(_variable))
 
 	// ID variables
-	pragma unset id_num_names
-	pragma unset id_str_names
-	split_rowvector(tokens(st_local(_id)), id_num_names, id_str_names,
-		&st_isnumvar_cp())
-	if (id_num_k = length(id_num_names))
-		id_num_r = st_data( ., id_num_names)
-	if (id_str_k = length(id_str_names))
-		id_str_r = st_sdata(., id_str_names)
-	assert(id_num_k | id_str_k)
+	id_names = tokens(st_local(_id))
+	id_k = length(id_names)
+	assert(id_k)
+	id_r = J(1, id_k, NULL)
+	for (i = 1; i <= id_k; i++) {
+		if (st_isnumvar(id_names[i]))
+			id_r[i] = &st_data( ., id_names[i])
+		else
+			id_r[i] = &st_sdata(., id_names[i])
+	}
 
 	// Variable name and new value variables
 	variable = st_sdata(., st_local(_variable))
@@ -481,8 +537,11 @@ void readreplace(
 
 	repl_N = st_nobs()
 
+	repl_file = st_tempfilename()
+	stata("qui sa " + repl_file)
 	stata("restore, preserve")
 
+	// No observations in the replacements file
 	if (!repl_N) {
 		st_local(_varlist, "")
 		st_local(_changes_N, "0")
@@ -491,13 +550,38 @@ void readreplace(
 	}
 
 	// Create views onto the ID variables of the master dataset.
-	if (id_num_k) {
-		pragma unset id_num_m
-		st_view(  id_num_m, ., id_num_names)
+	id_m = J(1, id_k, NULL)
+	order = st_tempname()
+	stata(sprintf("gen double %s = _n", order))
+	stata("sort " + invtokens(id_names))
+	for (i = 1; i <= id_k; i++) {
+		pragma unset id_view
+		if (st_isnumvar(id_names[i]))
+			st_view(  id_view, ., id_names[i])
+		else
+			st_sviewL(id_view, ., id_names[i])
+		// Copy id_view to a new address. While &id_view is constant in
+		// each iteration, &st_copy_view(id_view) will differ.
+		id_m[i] = &st_copy_view(id_view)
 	}
-	if (id_str_k) {
-		pragma unset id_str_m
-		st_sviewL(id_str_m, ., id_str_names)
+
+	// Determine which observations to replace for each replacement.
+	id_obs = J(repl_N, 2, .)
+	for (i = 1; i <= repl_N; i++) {
+		idx = binary_search_first(id_m, id_r, i)
+		if (idx == J(0, 0, .)) {
+			errprintf("{p}")
+			errprintf(sprintf("option id(): observation of variable%s %s in ",
+				(id_k > 1) * "s", invtokens(id_names)))
+			errprintf("replacements file not found in dataset in memory")
+			errprintf("{p_end}\n")
+			stata(sprintf("qui u %s, clear", repl_file))
+			stata(sprintf("li %s in %f, ab(%f) noo",
+				invtokens(id_names), i, max(strlen(id_names))))
+			exit(198)
+		}
+		id_obs[i, 1] = idx
+		id_obs[i, 2] = binary_search_last(id_m, id_r, i)
 	}
 
 	// Promote variable types.
@@ -513,7 +597,6 @@ void readreplace(
 	changes = J(1, repl_k, 0)
 	prev = ""
 	j = 0
-	obsnum = 1::st_nobs()
 	for (i = 1; i <= repl_N; i++) {
 		// Change in variable name
 		if (variable[i] != prev) {
@@ -527,15 +610,7 @@ void readreplace(
 			isstrL = st_vartype(variable[i]) == "strL"
 		}
 
-		// Select observations by ID.
-		touse = J(st_nobs(), 1, `True')
-		if (id_num_k)
-			touse = touse :& rowsum(id_num_m :== id_num_r[i,]) :== id_num_k
-		if (id_str_k)
-			touse = touse :& rowsum(id_str_m :== id_str_r[i,]) :== id_str_k
-		touseobs = select(obsnum, touse)
-
-		// Changes
+		touseobs = id_obs[i, 1]::id_obs[i, 2]
 		val = isnum ? value_num[i] : value[i]
 		changes[j] = changes[j] + sum(repl_view[touseobs] :!= val)
 		if (isstrL)
@@ -543,6 +618,8 @@ void readreplace(
 		else
 			repl_view[touseobs] = J(length(touseobs), 1, val)
 	}
+
+	stata("sort " + order)
 
 	// Return results to Stata.
 	st_local(_varlist, invtokens(repl_names))
