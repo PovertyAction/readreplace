@@ -27,8 +27,16 @@ Make replacements that are specified in an external dataset
 {title:Description}
 
 {pstd}
-{cmd:readreplace} makes replacements using a very specifically-formated .csv file.
-	It is intended for use with the output from {help cfout}.
+{cmd:readreplace} modifies the dataset currently in memory by
+making replacements that are specified in an external dataset,
+the replacements file.
+
+{pstd}
+The list of differences saved by the SSC program {helpb cfout} is designed for
+later use by {cmd:readreplace}. After the addition of a new variable to
+the {cmd:cfout} differences file that holds the new (correct) values,
+the file can be used as the {cmd:readreplace} replacements file.
+
 
 {title:Remarks}
 
