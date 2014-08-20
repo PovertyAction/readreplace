@@ -7,22 +7,39 @@
 Make replacements that are specified in an external dataset
 
 
+{marker syntax}{...}
 {title:Syntax}
 
-{p 8 17 2}
-{cmdab:readreplace}
-{cmd: using} {it: filename}
-{cmd:, id}({varname})
-[{cmd:display}]
+{p 8 10 2}
+{cmd:readreplace using} {it:{help filename}}{cmd:,}
+{opth id(varlist)} {opth var:iable(varname)} {opth val:ue(varname)}
+[{it:options}]
 
+{* Using -help odbc- as a template.}{...}
+{* 20 is the position of the last character in the first column + 3.}{...}
 {synoptset 20 tabbed}{...}
 {synopthdr}
 {synoptline}
-{synopt:{opt id(varname)}}Required. Name of unique identifier{p_end}
-{synopt:{opt di:splay}}show detail on what readreplace is doing{p_end}
+{syntab:Main}
+{* Using -help heckman- as a template.}{...}
+{p2coldent:* {opth id(varlist)}}variables for matching observations with
+the replacements specified in the using dataset{p_end}
+{p2coldent:* {opth var:iable(varname)}}variable in the using dataset that
+indicates the variables to replace{p_end}
+{p2coldent:* {opth val:ue(varname)}}variable in the using dataset that
+stores the new values{p_end}
+
+{syntab:Import}
+{synopt:{opt insheet}}use {helpb insheet} to import {it:filename};
+the default{p_end}
+{synopt:{opt u:se}}use {helpb use} to load {it:filename}{p_end}
+{synopt:{opt exc:el}}use {helpb import excel} to import {it:filename}{p_end}
+{synopt:{opt import(options)}}options to specify to the import command{p_end}
 {synoptline}
 {p2colreset}{...}
-{p 4 6 2}
+{* Using -help heckman- as a template.}{...}
+{p 4 6 2}* {opt id()}, {opt variable()}, and {opt value()} are required.
+
 
 {title:Description}
 
