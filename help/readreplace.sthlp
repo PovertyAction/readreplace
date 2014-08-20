@@ -77,5 +77,8 @@ Make replacements that are specified in an external dataset
 {title:Also see}
 
 {psee}
-Online:  {help cf}, {help cfout}
+Help:  {manhelp generate D}
+
+{psee}
+User-written:  {helpb cfout}, {helpb bcstats}, {helpb mergeall}
 {p_end}
