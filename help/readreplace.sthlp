@@ -64,6 +64,25 @@ Make replacements that are specified in an external dataset
 
 {phang}readreplace using "corrected values.csv", id(uniqueid)
 
+{marker results}{...}
+{title:Stored results}
+
+{pstd}
+{cmd:readreplace} stores the following in {cmd:r()}:
+
+{* Using -help spearman- as a template.}{...}
+{synoptset 15 tabbed}{...}
+{p2col 5 15 19 2: Scalars}{p_end}
+{synopt:{cmd:r(N)}}number of real changes{p_end}
+
+{p2col 5 15 19 2: Macros}{p_end}
+{synopt:{cmd:r(varlist)}}variables replaced{p_end}
+
+{p2col 5 15 19 2: Matrices}{p_end}
+{synopt:{cmd:r(changes)}}number of real changes by variable{p_end}
+{p2colreset}{...}
+
+
 {marker authors}{...}
 {title:Authors}
 
