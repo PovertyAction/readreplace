@@ -532,6 +532,161 @@ assert _rc
 compdta `noobs'
 cd ..
 
+* Test 26
+cd 26
+#d ;
+loc replace
+	// variable		new value	new type
+	// zero_byte
+	zero_byte		1				byte
+	zero_byte		0.1				c(type)
+		// c(type) even though double can store the value precisely and
+		// float cannot: assert 2147483620.1 != float(2147483620.1)
+	zero_byte		2147483620.1	c(type)
+	zero_byte		32741			long
+	zero_byte		2147483621		double
+	zero_byte		-127			byte
+	zero_byte		-128			int
+	zero_byte		100				byte
+	zero_byte		101				int
+	// zero_int
+		// No compress
+	zero_int		1				int
+	zero_int		0.1				c(type)
+	zero_int		2147483620.1	c(type)
+	zero_int		32741			long
+	zero_int		2147483621		double
+	zero_int		-32767			int
+	zero_int		-32768			long
+	zero_int		32740			int
+	zero_int		32741			long
+	// zero_long
+	zero_long		1				long
+	zero_long		0.1				c(type)
+	zero_long		2147483620.1	c(type)
+	zero_long		32741			long
+	zero_long		-2147483647		long
+	zero_long		-2147483648		double
+	zero_long		2147483620		long
+	zero_long		2147483621		double
+	// zero_float
+	zero_float		1				float
+	zero_float		0.1				float
+	zero_float		2147483620.1	float
+	zero_float		32741			float
+	zero_float		-9999999		float
+	zero_float		-10000000		float
+	zero_float		-9999999.1		float
+	zero_float		9999999			float
+	zero_float		10000000		float
+	zero_float		9999999.1		float
+	// zero_double
+	zero_double		1				double
+	zero_double		0.1				double
+	zero_double		2147483620.1	double
+	zero_double		32741			double
+;
+#d cr
+loc c_type `c(type)'
+tempfile t
+while `:list sizeof replace' {
+	gettoken var  replace : replace
+	gettoken val  replace : replace
+	gettoken type replace : replace
+	mac li _var _val _type
+
+	clear
+	set obs 1
+	gen id  = 1
+	gen var = "`var'"
+	gen val = "`val'"
+	sa `t', replace
+
+	if "`type'" == "c(type)" {
+		loc types float double
+		loc set_type 1
+	}
+	else {
+		loc types `type'
+		loc set_type 0
+	}
+	foreach vartype of loc types {
+		if `set_type' ///
+			set type `vartype'
+
+		u gen_master, clear
+		assert _N == 1
+		readreplace using `t', id(id) var(var) val(val) u
+		assert r(N) == 1
+		assert "`r(varlist)'" == "`var'"
+		assert "`:type `var''" == "`vartype'"
+		gen `vartype' val = `val'
+		assert `var' == val
+	}
+	if `set_type' ///
+		set type `c_type'
+}
+cd ..
+
+* Test 27
+cd 27
+mata: st_local("xmax", c("maxstrvarlen") * "x")
+#d ;
+loc replace
+	// variable		new value	new type
+	str_2			""			str2
+	str_2			x			str2
+	str_2			yy			str2
+	str_2			xxx			str3
+	str_2			`xmax'		str`c(maxstrvarlen)'
+;
+#d cr
+if c(stata_version) >= 13 {
+	mata: st_local("maxmore", st_local("xmax") + "x")
+	#d ;
+	loc replace
+	// variable		new value	new type
+	`replace'
+	str_2			\0			strL
+	str_2			x\0			strL
+	str_2			`maxmore'	strL
+	str_L			""			strL
+	str_L			x			strL
+	str_L			\0			strL
+	str_L			`xmax'		strL
+	str_L			`maxmore'	strL
+	;
+	#d cr
+}
+tempfile t
+while `:list sizeof replace' {
+	gettoken var  replace : replace
+	gettoken val  replace : replace
+	gettoken type replace : replace
+	mac li _var _type
+	cap noi mac li _val
+
+	mata: st_strscalar("val0", subinstr(st_local("val"), "\0", char(0), .))
+
+	clear
+	set obs 1
+	gen id  = 1
+	gen var = "`var'"
+	gen val = val0
+	d
+	mata: st_sdata(., "val")
+	sa `t', replace
+
+	u gen_master, clear
+	assert _N == 1
+	readreplace using `t', id(id) var(var) val(val) u
+	assert r(N) == 1
+	assert "`r(varlist)'" == "`var'"
+	assert "`:type `var''" == "`type'"
+	assert `var' == val0
+}
+cd ..
+
 
 /* -------------------------------------------------------------------------- */
 					/* user mistakes		*/

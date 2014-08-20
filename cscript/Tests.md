@@ -136,4 +136,14 @@ Contributions of new tests are welcome. When adding a test to the cscript, pleas
 	<td>Basic</td>
 	<td>The dataset in memory has no observations; specify replacements files with and without observations.</td>
 </tr>
+<tr>
+	<td>26</td>
+	<td>Basic</td>
+	<td>Simple tests of numeric recasting</td>
+</tr>
+<tr>
+	<td>27</td>
+	<td>Basic</td>
+	<td>Simple tests of string recasting</td>
+</tr>
 </table>

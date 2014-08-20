@@ -320,18 +320,54 @@ void st_sviewL(`TM' V, `RM' i, `TR' j)
 	return(cp)
 }
 
-// Returns the list of numeric types that can store the values of X.
-// The list is ordered by decreasing precision (for noninteger X) and
-// increasing size, meaning that the first element is often the optimal type.
-`SR' numeric_types(`RM' X)
+// Returns the list of numeric types such that if a variable is stored as
+// that type, -replace- will not promote it in order to store the values of X.
+// If a variable's type is not in the list, -replace- will promote it;
+// the list is ordered such that the preferred type is first.
+`SR' numeric_promote_types(`RM' X)
 {
 	`RS' min, max, n
 	`SR' types
 
 	n = length(X)
-	if (!all(X :== floor(X)) & n)
-		types = "double", "float"
+	if (!all(X :== floor(X)) & n) {
+		assert(anyof(("float", "double"), c("type")))
+		if (c("type") == "float")
+			types = "float", "double"
+		else if (c("type") == "double")
+			types = "double", "float"
+		else
+			_error(9)
+	}
 	else {
+		/* Examples
+
+		. sysuse auto, clear
+		. replace foreign = 32741
+		foreign was byte now long
+		(74 real changes made)
+
+		. sysuse auto, clear
+		. replace foreign = 2147483620
+		foreign was byte now long
+		(74 real changes made)
+
+		. sysuse auto, clear
+		. replace foreign = 2147483621
+		foreign was byte now double
+		(74 real changes made)
+
+		. * Never promote floats.
+		. sysuse auto, clear
+		. recast float foreign
+		. replace foreign = 2147483620
+		(74 real changes made)
+		. assert foreign != 2147483620
+
+		In summary, -replace- will never promote an integer variable to float,
+		but neither will it promote it from float.
+		*/
+
 		min = min(X)
 		max = max(X)
 
@@ -340,11 +376,9 @@ void st_sviewL(`TM' V, `RM' i, `TR' j)
 			types = types, "byte"
 		if (min >= -32767 & max <= 32740 | !n)
 			types = types, "int"
-		if (min >= -9999999 & max <= 9999999 | !n)
-			types = types, "float"
 		if (min >= -2147483647 & max <= 2147483620 | !n)
 			types = types, "long"
-		types = types, "double"
+		types = types, "double", "float"
 	}
 
 	return(types)
@@ -361,7 +395,7 @@ void st_promote_type(`SS' var, `TM' X)
 	type_new = type_old = st_vartype(var)
 	if (st_isnumvar(var)) {
 		// Never recast floats to doubles.
-		numtypes = numeric_types(X)
+		numtypes = numeric_promote_types(X)
 		if (!anyof(numtypes, type_old))
 			type_new = numtypes[1]
 	}
@@ -370,7 +404,9 @@ void st_promote_type(`SS' var, `TM' X)
 			maxlen = max(strlen(X))
 			if (maxlen == .)
 				maxlen = 0
-			if (strtoreal(subinstr(type_old, "str", "", 1)) < maxlen) {
+			if (any(strpos(X, char(0))))
+				type_new = "strL"
+			else if (strtoreal(subinstr(type_old, "str", "", 1)) < maxlen) {
 				strpound = sprintf("str%f",
 					min((max((maxlen, 1)), c("maxstrvarlen"))))
 				if (c("stata_version") < 13)
