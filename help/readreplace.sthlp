@@ -64,6 +64,16 @@ Make replacements that are specified in an external dataset
 
 {phang}readreplace using "corrected values.csv", id(uniqueid)
 
+{marker authors}{...}
+{title:Authors}
+
+{pstd}Ryan Knight, Innovations for Poverty Action{p_end}
+{pstd}rknight@poverty-action.org{p_end}
+
+{pstd}Matthew White, Innovations for Poverty Action{p_end}
+{pstd}mwhite@poverty-action.org{p_end}
+
+
 {title:Also see}
 
 {psee}
