@@ -1,11 +1,11 @@
 {smcl}
 {* *! version 0.1  14sep2010}{...}
-{cmd:help readreplace}
-{hline}
-
 {title:Title}
 
-    {hi:readreplace} -- Make many replacements to a dataset from a .csv file
+{phang}
+{cmd:readreplace} {hline 2}
+Make replacements that are specified in an external dataset
+
 
 {title:Syntax}
 
