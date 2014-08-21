@@ -122,13 +122,10 @@ foreach suffix in "" correct {
 	* Check that the variable contains a string that requires
 	* an expression that includes multiple strings.
 	if c(stata_version) >= 11.2 {
-		mata {
-			i = 0
-			n = 0
-			while (n < 2 & ++i <= st_nobs())
-				specialexp(st_sdata(i, "string`suffix'"), n)
-			assert(n > 1)
-		}
+		mata: i = n = 0
+		mata: while (n < 2 & ++i <= st_nobs()) ///
+			specialexp(st_sdata(i, "string`suffix'"), n);;
+		mata: assert(n > 1)
 	}
 }
 lab var integer		"Some integer"

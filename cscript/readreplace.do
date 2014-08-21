@@ -761,14 +761,17 @@ foreach q in
 	outsheet using `t', c
 
 	u firstEntry, clear
-	foreach varabbrev in "" varabbrev {
+	loc c_varabbrev `c(varabbrev)'
+	foreach varabbrev in on off {
+		set varabbrev `varabbrev'
 		#d ;
-		rcof "noi `varabbrev' readreplace using `t',
+		rcof "noi readreplace using `t',
 			id(uniqueid) var(question) val(correctvalue)"
 			== 111;
 		#d cr
 		compdta firstEntry
 	}
+	set varabbrev `c_varabbrev'
 }
 cd ..
 
@@ -917,13 +920,16 @@ cd ..
 cd 21
 u firstEntry, clear
 foreach id in uniqueid unique* {
-	foreach varabbrev in "" varabbrev {
+	loc c_varabbrev `c(varabbrev)'
+	foreach varabbrev in on off {
+		set varabbrev `varabbrev'
 		#d ;
-		rcof "noi `varabbrev' readreplace using correctedValues.csv,
+		rcof "noi readreplace using correctedValues.csv,
 			id(`id') var(question) val(correctvalue)"
 			== 111;
 		#d cr
 	}
+	set varabbrev `c_varabbrev'
 }
 cd ..
 
