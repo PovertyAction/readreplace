@@ -465,6 +465,8 @@ foreach char of loc chars {
 	char _dta[`char']
 }
 assert _merge != 2
+cou if !mi(string) & mi(correct) & _merge == 3
+assert r(N)
 replace string = correct if _merge == 3
 drop correct _merge
 sort order
