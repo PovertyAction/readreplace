@@ -55,35 +55,119 @@ the {cmd:cfout} differences file that holds the new (correct) values,
 the file can be used as the {cmd:readreplace} replacements file.
 
 
+{marker remarks}{...}
 {title:Remarks}
 
 {pstd}
-{cmd: readreplace} is intended to be used as part of the data entry process
-	when data is entered two times for accuracy.
-	After the second entry, the datasets need to be reconciled.
-	{help cfout} will compare the first and second entries and
-	generate a list of discrepancies in a format that is useful
-	for the data entry teams.
-	The data entry operators can then simply type the correct value
-	in a new column of the cfout results.
-	To make the changes in your dataset,
-	load your data then run readreplace	using the new .csv file.
+{cmd:readreplace} changes the contents of existing variables by
+making replacements that are specified in a separate dataset,
+the replacements file. The replacements file should be long by
+replacement such that each observation is a replacement to complete.
+Replacements are described by a variable that contains
+the name of the variable to change, specified to option {opt variable()},
+and a variable that stores the new value for the variable,
+specified to option {opt value()}. The replacements file should also hold
+variables shared by the dataset in memory that indicate
+the subset of the data for which each change is intended;
+these are specified to option {opt id()}, and are used to match
+observations in memory to their replacements in the replacements file.
 
 {pstd}
-{cmd: readreplace} requires the using file to be a .csv file with the format
+Below, an example replacements file is shown with three variables:
+{cmd:uniqueid}, to be specified to {opt id()},
+{cmd:Question}, to be specified to {opt variable()},
+and {cmd:CorrectValue}, to be specified to {opt value()}.
 
-{center:{it: id value, question name , correct value } }
+{cmd}{...}
+    {c TLC}{hline 10}{c -}{hline 12}{c -}{hline 14}{c TRC}
+    {c |} uniqueid     Question   CorrectValue {c |}
+    {c LT}{hline 10}{c -}{hline 12}{c -}{hline 14}{c RT}
+    {c |}      105     district             13 {c |}
+    {c |}      125          age              2 {c |}
+    {c |}      138       gender              1 {c |}
+    {c |}      199     district             34 {c |}
+    {c |}        2   am_failure              3 {c |}
+    {c BLC}{hline 10}{c -}{hline 12}{c -}{hline 14}{c BRC}
+{txt}{...}
 
 {pstd}
-	It then runs the replaces
+For each observation of the replacements file,
+{cmd:readreplace} essentially runs the following {helpb replace} command:
 
-{center: replace {it:question name} = {it:correct value} if {it:id varname} == {it:id value} }
+{phang}
+{cmd:replace} {it:Question_value} {cmd:=} {it:CorrectValue_value}
+{cmd:if uniqueid ==} {it:uniqueid_value}
 
 {pstd}
-	for each line in the csv file,
-	with allowances for whether the variables/ids are string or numeric.
-	The display option is useful for debugging.
-	The first row is assumed to be a header row, and no replacements are made to data in the first row.
+That is, the effect of {cmd:readreplace} here is the same as
+these five {cmd:replace} commands:
+
+{cmd}{...}
+{phang}replace district{space 3}= 13 if uniqueid == 105{p_end}
+{phang}replace age{space 8}= 2{space 2}if uniqueid == 125{p_end}
+{phang}replace gender{space 5}= 1{space 2}if uniqueid == 138{p_end}
+{phang}replace district{space 3}= 34 if uniqueid == 199{p_end}
+{phang}replace am_failure = 3{space 2}if uniqueid == 2{p_end}
+{txt}{...}
+
+{pstd}
+The variable specified to {opt value()} may be numeric or string;
+either is accepted.
+
+{pstd}
+The replacements file may be one of the following formats:
+
+{* Using -help anova- as a template.}{...}
+{phang2}o  {it:Comma-separated data.} This is the default format,
+but you may specify option {cmd:insheet}; either way, {cmd:readreplace} will use
+{cmd:insheet} to import the replacements file. You can also specify
+any options for {helpb insheet} to option {opt import()}.{p_end}
+{phang2}o  {it:Stata dataset.} Specify option {cmd:use} to {cmd:readreplace},
+passing any options for {helpb use} to {opt import()}.{p_end}
+{phang2}o  {it:Excel file.} Specify option {cmd:excel} to {cmd:readreplace},
+passing any options for {helpb import excel} to {opt import()}.{p_end}
+
+{pstd}
+{cmd:readreplace} may be employed for a variety of purposes,
+but it was designed to be used as part of a data entry process in which
+data is entered two times for accuracy.
+After the second entry, the two separate entry datasets need to be reconciled.
+{helpb cfout} can compare the first and second entries,
+saving the list of differences in a format that is useful for data entry teams.
+Data entry operators can then add a new variable to the differences file for
+the correct value.
+Once this variable has been entered, load either of the two entry datasets,
+then run {cmd:readreplace} with the new replacements file.
+
+{pstd}
+The GitHub repository for {cmd:readreplace} is
+{browse "https://github.com/PovertyAction/readreplace":here}.
+Previous versions may be found there: see the tags.
+
+
+{marker remarks_promoting}{...}
+{title:Remarks for promoting storage types}
+
+{pstd}
+{cmd:readreplace} will change variables' {help data types:storage types} in
+much the same way as {helpb replace},
+promoting storage types according to these rules:
+
+{* Using -help 663- as a template.}{...}
+{phang2}1.  Storage types are only promoted;
+they are never {help compress:compressed}.{p_end}
+{phang2}2.  The storage type of {cmd:float} variables is never changed.{p_end}
+{phang2}3.  If a variable of
+integer type ({cmd:byte}, {cmd:int}, or {cmd:long}) is replaced with
+a noninteger value, its storage type is changed to
+{cmd:float} or {cmd:double} according to
+the current {helpb set type} setting.{p_end}
+{phang2}4.  If a variable of integer type is replaced with an integer value that
+is too large or too small for its current storage type, it is promoted to
+a longer type ({cmd:int}, {cmd:long}, or {cmd:double}).{p_end}
+{phang2}5.  When needed, {cmd:str}{it:#} variables are promoted to
+a longer {cmd:str}{it:#} type or to {cmd:strL}.{p_end}
+
 
 {title:Examples}
 
