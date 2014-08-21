@@ -131,4 +131,9 @@ Contributions of new tests are welcome. When adding a test to the cscript, pleas
 	<td>User mistakes</td>
 	<td>Specify a <code>varlist</code> to option <code>id()</code> while using version 1 syntax.</td>
 </tr>
+<tr>
+	<td>28</td>
+	<td>Basic</td>
+	<td>Help file examples for <code>readreplace</code> version 2.0.0</td>
+</tr>
 </table>

@@ -169,9 +169,35 @@ a longer type ({cmd:int}, {cmd:long}, or {cmd:double}).{p_end}
 a longer {cmd:str}{it:#} type or to {cmd:strL}.{p_end}
 
 
+{marker examples}{...}
 {title:Examples}
 
-{phang}readreplace using "corrected values.csv", id(uniqueid)
+{pstd}
+Make the changes specified in {cmd:correctedValues.csv}
+{p_end}{cmd}{...}
+{phang2}. use firstEntry{p_end}
+{phang2}. readreplace using correctedValues.csv,
+id(uniqueid) variable(question) value(correctvalue){p_end}
+{txt}{...}
+
+{pstd}
+Same as the previous {cmd:readreplace} command,
+but specifies option {cmd:case} to {cmd:insheet} to import the replacements file
+{p_end}{cmd}{...}
+{phang2}. use firstEntry{p_end}
+{phang2}. readreplace using correctedValues.csv,
+id(uniqueid) variable(Question) value(CorrectValue) import(case){p_end}
+{txt}{...}
+
+{pstd}
+Same as the previous {cmd:readreplace} command,
+but loads the replacements file as a Stata dataset
+{p_end}{cmd}{...}
+{phang2}. use firstEntry{p_end}
+{phang2}. readreplace using correctedValues.dta,
+id(uniqueid) variable(Question) value(CorrectValue) use{p_end}
+{txt}{...}
+
 
 {marker results}{...}
 {title:Stored results}

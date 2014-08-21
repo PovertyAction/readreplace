@@ -481,6 +481,22 @@ assert r(N) == `N_imperfect'
 compdta `expected'
 cd ..
 
+* Test 28
+loc curdir "`c(pwd)'"
+cd ../../help/example/2.0.0
+* Make the changes specified in correctedValues.csv
+use firstEntry, clear
+readreplace using correctedValues.csv, id(uniqueid) variable(question) value(correctvalue)
+* Same as the previous -readreplace- command,
+* but specifies option -case- to -insheet- to import the replacements file
+use firstEntry, clear
+readreplace using correctedValues.csv, id(uniqueid) variable(Question) value(CorrectValue) import(case)
+* Same as the previous -readreplace- command,
+* but loads the replacements file as a Stata dataset
+use firstEntry, clear
+readreplace using correctedValues.dta, id(uniqueid) variable(Question) value(CorrectValue) use
+cd "`curdir'"
+
 
 /* -------------------------------------------------------------------------- */
 					/* user mistakes		*/
