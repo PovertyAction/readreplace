@@ -15,12 +15,6 @@ pr readreplace, rclass
 
 	preserve
 
-	keep `id'
-	if _N ///
-		qui duplicates drop
-	tempfile idvals
-	qui sa `idvals'
-
 	import_replacements `using', id(`id') `options'
 	loc variable	`r(variable)'
 	loc value		`r(value)'
