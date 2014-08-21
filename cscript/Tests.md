@@ -146,4 +146,9 @@ Contributions of new tests are welcome. When adding a test to the cscript, pleas
 	<td>Basic</td>
 	<td>Simple tests of string recasting</td>
 </tr>
+<tr>
+	<td>28</td>
+	<td>Basic</td>
+	<td>Help file examples for <code>readreplace</code> version 2.0.0</td>
+</tr>
 </table>
