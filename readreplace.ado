@@ -23,6 +23,7 @@ pr readreplace, rclass
 	qui levelsof `variable', loc(vars_r) miss
 	loc rnotm : list vars_r - vars_m
 	if `:list sizeof rnotm' {
+		* cscript 6
 		gettoken first : rnotm
 		if !`:length loc first' ///
 			loc first """"
@@ -38,6 +39,7 @@ pr readreplace, rclass
 	}
 	loc overlap : list vars_r & id
 	if "`overlap'" != "" {
+		* cscript 23
 		di as err "{p}"
 		di as err "option variable(): variable `variable' cannot contain"
 		di as err "a variable name specified to option id()"
@@ -54,6 +56,7 @@ pr readreplace, rclass
 		foreach var of loc id {
 			cap conf numeric var `var'
 			if !_rc != `:list var in numvars' {
+				* cscript 9
 				loc typem : word `:list posof "`var'" in id' of `idtypes'
 				loc typeu : type `var'
 				di as err "{p}"
@@ -100,6 +103,7 @@ pr readreplace, rclass
 				qui cou if `variable' == "`var'" & mi(real(`trimval'))
 				loc miss_num = r(N)
 				if `miss_str' != `miss_num' {
+					* cscript 14
 					di as err "option value(): cannot replace " ///
 						"numeric variable `var' with string value"
 					ex 109
@@ -149,11 +153,13 @@ pr import_replacements, rclass
 	else {
 		* Check -variable()- and -value()-.
 		if "`variable'" != "" & "`value'" == "" {
+			* cscript 15
 			loc 0
 			syntax, value(varname)
 			/*NOTREACHED*/
 		}
 		if "`variable'" == "" & "`value'" != "" {
+			* cscript 15
 			loc 0
 			syntax, variable(varname)
 			/*NOTREACHED*/
@@ -164,6 +170,7 @@ pr import_replacements, rclass
 
 		* Check -use-, -insheet-, and -excel-.
 		if ("`use'" != "") + ("`insheet'" != "") + ("`excel'" != "") != 1 {
+			* cscript 20
 			di as err "options use, insheet, and excel are mutually exclusive"
 			ex 198
 		}
@@ -176,6 +183,7 @@ pr import_replacements, rclass
 	loc cmd `use'`insheet'`importexcel' `using', clear `import'
 	cap `cmd'
 	if _rc {
+		* cscript 19
 		loc rc = _rc
 		* Display the error message.
 		cap noi `cmd'
@@ -192,6 +200,7 @@ pr import_replacements, rclass
 		gettoken value : rest
 
 		if "`first'" != "`id'" | c(k) != 3 {
+			* cscript 4
 			di as err "Error: Using file has improper format"
 			di as err "The using file must have the format: " ///
 				as res "`id',varname,correct_value"
@@ -207,6 +216,7 @@ pr import_replacements, rclass
 		foreach var of loc id {
 			cap conf var `var', exact
 			if _rc {
+				* cscript 16
 				di as err "variable `var' not found in replacements file" _n ///
 					"(error in option {bf:id()})"
 				ex 111
@@ -215,12 +225,15 @@ pr import_replacements, rclass
 
 		* Check -variable()- and -value()-.
 
+		* cscript 16
 		loc 0 , variable(`variable')
 		syntax, variable(varname)
+		* cscript 16
 		loc 0 , value(`value')
 		syntax, value(varname)
 
 		if "`variable'" == "`value'" {
+			* cscript 17
 			di as err "variable `variable' cannot be specified to " ///
 				"both options variable() and value()"
 			ex 198
@@ -229,6 +242,7 @@ pr import_replacements, rclass
 		* Check -id()-, -variable()-, and -value()-.
 		foreach opt in variable value {
 			if `:list `opt' in id' {
+				* cscript 18
 				di as err "variable ``opt'' cannot be specified to " ///
 					"both options id() and `opt'()"
 				ex 198
@@ -600,6 +614,7 @@ void readreplace(
 	for (i = 1; i <= repl_N; i++) {
 		idx = binary_search_first(id_m, id_r, i)
 		if (idx == J(0, 0, .)) {
+			// cscript 7
 			errprintf("{p}")
 			errprintf(sprintf("option id(): observation of variable%s %s in ",
 				(id_k > 1) * "s", invtokens(id_names)))
