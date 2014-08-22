@@ -261,6 +261,8 @@ end
 /* -------------------------------------------------------------------------- */
 					/* type definitions, etc.	*/
 
+vers 10.1
+
 * Convert real x to string using -strofreal(x, `RealFormat')-.
 loc RealFormat	""%24.0g""
 
