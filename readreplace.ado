@@ -1,4 +1,5 @@
 *! v1 by Ryan Knight 12jan2011
+*! version 2.0.0 Matthew White 26aug2014
 pr readreplace, rclass
 	vers 10.1
 
