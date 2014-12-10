@@ -33,8 +33,10 @@ set more off
 cd ..
 adopath ++ `"`c(pwd)'"'
 adopath ++ `"`c(pwd)'/cscript/ado"'
-* Make sure to install -compdta- (https://github.com/matthew-white/compdta),
-* adding it to a system directory or your ado-path.
+* Make sure to install
+* -matawarn- (https://github.com/matthew-white/matawarn) and
+* -compdta- (https://github.com/matthew-white/compdta),
+* adding them to a system directory or your ado-path.
 cd cscript
 
 timer clear 1
