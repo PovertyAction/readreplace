@@ -21,7 +21,8 @@ pr readreplace, rclass
 	loc value		`r(value)'
 
 	* "r" suffix for "replacements file"
-	qui levelsof `variable', loc(vars_r) miss
+	if _N ///
+		qui levelsof `variable', loc(vars_r) miss
 	loc rnotm : list vars_r - vars_m
 	if `:list sizeof rnotm' {
 		* cscript 6
