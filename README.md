@@ -189,11 +189,11 @@ The help file looks best when viewed in Stata as SMCL.
 <p>
 <a name="authors"></a><b><u>Authors</u></b>
 <p>
-    Ryan Knight, Innovations for Poverty Action
-    rknight@poverty-action.org
+    Ryan Knight
+    Matthew White
 <p>
-    Matthew White, Innovations for Poverty Action
-    mwhite@poverty-action.org
+    For questions or suggestions, submit a GitHub issue or e-mail
+    researchsupport@poverty-action.org.
 <p>
 <p>
 <b><u>Also see</u></b>
