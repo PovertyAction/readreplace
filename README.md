@@ -1,6 +1,6 @@
 
 **Important Notice:** 
-This repository is no longer under active development. We have developed a new version of the program called `ipareadreplace`. The new program is part of the `ipacheck` package and is housed [here](https://github.com/PovertyAction/high-frequency-checks). Thank you for your support and understanding.
+This repository is no longer under active development. We have developed a new version of the program called `ipacheckcorrections`. The new program is part of the `ipacheck` package and is housed [here](https://github.com/PovertyAction/high-frequency-checks). Thank you for your support and understanding.
 
 readreplace
 ===========
